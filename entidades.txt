@@ -1,0 +1,192 @@
+Camion
+
+string patente
+string modelo
+string marca
+int año
+string estado
+int capacidad
+bool habilitado
+Date fecha_seguro
+
+----
+
+Campo
+
+int cod_productor
+string nombre
+string direccion
+int hectareas
+bool habilitado
+string localidad
+
+----
+
+Persona
+
+int id_persona
+string cuil
+string dni
+string nombre
+string apellido
+string direccion
+string telefono
+Date fechaNacimiento
+bool habilitado
+string iva
+string localidad
+string nombreApellido (no se ingresa directamente, es la concatenacion del nombre + apellido)
+----
+
+Chofer (hereda de Persona)
+
+int id_persona
+string cuil
+string nombre
+string apellido
+string dni
+string direccion
+string telefono
+Date fecha_nacimiento
+bool habilitado
+string nro_carnet
+int cod_transportista
+----
+
+Productor (hereda de Persona)
+
+int idPersona
+string cuil
+string nombre
+string apellido
+string dni
+string direccion
+string telefono
+Date fecha_nacimiento
+bool habilitado
+string localidad
+string iva
+----
+
+
+Cosecha
+
+int cod_cosecha
+string descripcion
+bool habilitado
+
+----
+
+Empleado (hereda de Persona)
+
+int idPersona
+string cuil
+string nombre
+string apellido
+string dni
+string direccion
+string telefono
+Date fecha_nacimiento
+bool habilitado
+
+----
+
+Empresa
+
+string razon_social
+string cuit
+string domicilio
+string localidad
+string iva
+bool habilitado
+
+----
+
+Especie
+
+int cod_especia
+string descripcion
+bool habilitado
+
+----
+
+IngresoCereal (esto desp lo vemos bien, por ahora hagamos abm de las demás cosas)
+
+int nro_cp
+Date fecha_emision
+int ctg
+bool flete_corto
+Date fecha_arribo
+int cod_productor
+string cee
+Date fecha_vencimiento
+int remitente_comercial
+int intermediario
+int cod_especie
+ind cod_cosecha
+string calidad
+int procedencia
+Double kg_bruto
+Double kg_tara
+Double kg_neto
+Double porc_humedad
+Double porc_zarandeo
+Double porc_volatil
+Double porc_calidad
+int cod_chofer
+string patente
+bool flete_pago
+int cod_tarifa
+int kms_recorridos
+Double tarifa
+int cod_destinatario
+string domicilio_destino
+string localidad_destino
+string provincia_destino
+string observaciones
+
+----
+
+MermaHumedad
+
+int cod_especie
+Double porc_humedad
+Double porc_merma_humedad
+
+----
+
+Rubro
+
+string descripcion
+bool habilitado
+
+----
+
+Tarifa
+
+int cod_tarifa
+string descripcion
+Double tarifa
+bool habilitado
+
+----
+
+Transportista 
+
+int cod_transportista
+string razon_social
+string cuit
+string telefono
+bool habilitado
+string iva
+string domicilio
+string localidad
+
+----
+
+Usuario
+
+string usuario
+string contraseña
+int id_persona
+bool habilitado
