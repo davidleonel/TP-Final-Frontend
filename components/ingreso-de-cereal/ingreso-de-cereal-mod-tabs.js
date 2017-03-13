@@ -16,6 +16,9 @@ import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
 
 
+import DeleteIcon from 'react-material-icons/icons/action/delete';
+
+
 const styles = {
     headline: {
         fontSize: 24,
@@ -103,7 +106,8 @@ var IngresoDeCerealModTabs = React.createClass ({
             transportistasRazonSocial:[],
             tarifasDesc:[],
             destinosDesc:[],
-            calidades: ['Conforme', 'Condicional'],
+            calidades: ['conforme', 'condicional'],
+            mermasHumedadPorc: [],
 
 
             currentProductorCuil:'',
@@ -127,6 +131,18 @@ var IngresoDeCerealModTabs = React.createClass ({
             defaultFechaEmision:'',
             defaultFechaArribo:'',
             defaultFechaVencimiento:'',
+
+            Bruto: 0,
+            Tara: 0,
+            PesoNeto: 0,
+            '% Humedad': 0,
+            '% Zarandeo': 0,
+            '% Volátil': 0,
+            'Kgs. Humedad': 0,
+            'Kgs. Zarandeo': 0,
+            'Kgs. Volátil': 0,
+            Total: 0,
+            'Neto Final': 0,
         }
 
     },
@@ -140,6 +156,7 @@ var IngresoDeCerealModTabs = React.createClass ({
         this.getAllTransportistas();
         this.getAllTarifas();
         this.getAllDestinos();
+        this.getAllMermasHumedad();
 
         this.setState({
             itemSelected:  this.props.params.identifier
@@ -152,8 +169,67 @@ var IngresoDeCerealModTabs = React.createClass ({
     handleControlledInputChange: function (event) {
         this.setState({
             [event.target.id]: event.target.value
-        });
+        }, this.calculateGranosBox(event.target.id, event.target.value));
+    },
 
+    calculateGranosBox: function (id, value) {
+        this.calculatePesoNeto();
+
+        if (id === '% Humedad') {
+            this.calculateKgsHumedad(value);
+        }
+        if (id === '% Zarandeo') {
+            this.calculateKgsZarandeo(value);
+        }
+        if (id === '% Volátil') {
+            this.calculateKgsVolatil(value);
+        }
+
+        this.calculateNetoFinal();
+    },
+    calculatePesoNeto: function () {
+        var neto = this.state['Bruto'] - this.state['Tara'];
+
+        this.setState({
+            PesoNeto: neto
+        }, this.forceUpdate());
+    },
+    calculateKgsHumedad: function (porcHumedad) {
+
+        var ph = parseInt(porcHumedad);
+        var kgsHumedad = (this.state.PesoNeto * ph) / 100;
+
+        this.setState({
+            'Kgs. Humedad': kgsHumedad,
+            Total: kgsHumedad + this.state['Kgs. Zarandeo'] + this.state['Kgs. Volátil']
+        });
+    },
+    calculateKgsZarandeo: function (porcZarandeo) {
+        var pz = parseInt(porcZarandeo);
+        var pesoNeto = this.state.PesoNeto;
+        var kgsHumedad = parseInt(this.state['Kgs. Humedad']);
+        var kgsZarandeo = (pesoNeto - kgsHumedad) * pz / 100;
+
+        this.setState({
+            'Kgs. Zarandeo': kgsZarandeo,
+            Total: this.state['Kgs. Humedad'] + kgsZarandeo + this.state['Kgs. Volátil']
+        });
+    },
+    calculateKgsVolatil: function (porcVolatil) {
+        var pesoNeto = this.state.PesoNeto;
+        var kgsHumedad = this.state['Kgs. Humedad'];
+        var kgsZarandeo = this.state['Kgs. Zarandeo'];
+        var kgsVolatil = (pesoNeto - kgsHumedad - kgsZarandeo)* porcVolatil / 100;
+
+        this.setState({
+            'Kgs. Volátil': kgsVolatil,
+            Total: this.state['Kgs. Humedad'] + this.state['Kgs. Zarandeo'] + kgsVolatil
+        });
+    },
+    calculateNetoFinal: function () {
+        this.setState({
+            'Neto Final': this.state['PesoNeto'] - this.state['Total']
+        });
     },
     setFleteCortoValue: function () {
         this.setState({
@@ -205,11 +281,13 @@ var IngresoDeCerealModTabs = React.createClass ({
         if (label === 'Intermediario') {
             value = this.state.currentIntermediario;
         }
+        if (label === 'Merma Humedad') {
+            value = this.state.currentMermaHumedad;
+        }
 
 
         return value
     },
-
     handleControlledSelectFieldValueChange: function (label, event, key, payload) {
 
         if (label === 'Productor') {
@@ -281,6 +359,11 @@ var IngresoDeCerealModTabs = React.createClass ({
                 currentIntermediario: payload
             });
         }
+        if (label === 'Merma Humedad') {
+            this.setState({
+                currentMermaHumedad: payload
+            });
+        }
 
 
     },
@@ -344,6 +427,11 @@ var IngresoDeCerealModTabs = React.createClass ({
         }
         if (label === 'Intermediario') {
             values = this.state.productoresCuil.map(function (value, key) {
+                return <MenuItem value={value} key={key} primaryText={value}/>
+            })
+        }
+        if (label === 'Merma Humedad') {
+            values = this.state.mermasHumedadPorc.map(function (value, key) {
                 return <MenuItem value={value} key={key} primaryText={value}/>
             })
         }
@@ -415,8 +503,7 @@ var IngresoDeCerealModTabs = React.createClass ({
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
 
-                                <div style={{display: 'inline'}} >
-                                <div style={{display: 'inline-block', marginBottom: '20px', padding: '0 0 10px 10px', border: 'solid black 1px', width: '75%'}}>
+                                <div style={{padding: '0 0 10px 10px', border: 'solid black 1px', marginLeft:'-10px'}}>
                                     <TextField
                                         style={styles.textField}
                                         hintText= 'CP nro.'
@@ -426,38 +513,6 @@ var IngresoDeCerealModTabs = React.createClass ({
                                         value= {this.state['nroCP']}
                                         onChange={this.handleControlledInputChange}
                                     />
-                                </div>
-                                <div style={{display: 'inline-block', width: '20%'}}>
-                                    <RaisedButton
-                                        label="Dar de baja"
-                                        labelPosition="before"
-                                        primary={true}
-                                        icon={<ActionAndroid />}
-                                        style={styles.button}
-                                        onTouchTap={this.handleDarDeBaja}
-                                    />
-                                    <Dialog
-                                        title="Se estan por dar de baja registros."
-                                        actions={[
-                                        <FlatButton
-                                            label="Cancelar"
-                                            primary={true}
-                                            onTouchTap={this.handleCloseDeleteConfirmationModal}
-                                        />,
-                                        <FlatButton
-                                            label="Aceptar"
-                                            primary={true}
-                                            disabled={false}
-                                            onTouchTap={this.handleDeleteConfirmation}
-                                        />
-                                    ]}
-                                        modal={false}
-                                        open={this.state.deleteConfirmationModal}
-                                    >
-                                        {'Esta seguro que quiere dar de baja la carta de porte: ' + this.state['CP nro.'] + '?'}
-                                    </Dialog>
-
-                                </div>
                                 </div>
                                 <br />
                                 <div style={{padding: '0 0 10px 10px', display: 'inline-block', border: 'solid black 1px',float:'right', width:'40%' }}>
@@ -531,7 +586,39 @@ var IngresoDeCerealModTabs = React.createClass ({
                                     >
                                         {this.renderSelectFieldsValues('Intermediario')}
                                     </SelectField>
+
+                                    <div style={{display: 'inline-block', width: '20%', float:'right', textAlign:'right', marginRight:'5px', marginTop:'30px'}}>
+                                        <RaisedButton
+                                            label="Dar de baja"
+                                            labelPosition="before"
+                                            primary={true}
+                                            icon={<DeleteIcon style={{paddingBottom: '6px'}} />}
+                                            style={styles.button}
+                                            onTouchTap={this.handleDarDeBaja}
+                                        />
+                                        <Dialog
+                                            title="Se estan por dar de baja registros."
+                                            actions={[
+                                        <FlatButton
+                                            label="Cancelar"
+                                            primary={true}
+                                            onTouchTap={this.handleCloseDeleteConfirmationModal}
+                                        />,
+                                        <FlatButton
+                                            label="Aceptar"
+                                            primary={true}
+                                            disabled={false}
+                                            onTouchTap={this.handleDeleteConfirmation}
+                                        />
+                                    ]}
+                                            modal={false}
+                                            open={this.state.deleteConfirmationModal}
+                                        >
+                                            {'Esta seguro que quiere dar de baja la carta de porte: ' + this.state['CP nro.'] + '?'}
+                                        </Dialog>
+                                    </div>
                                 </div>
+
                             </Paper>
                         </div>
                     </div>
@@ -588,44 +675,45 @@ var IngresoDeCerealModTabs = React.createClass ({
                                 <br />
                                 <div style={{padding: '0 0 10px 10px', display: 'inline-block', border: 'solid black 1px', width:'60%' }}>
                                     <TextField
-                                        style={styles.textField}
+                                        style={{marginRight: '5%', display: 'inline-block', verticalAlign: 'top'}}
                                         hintText= 'Bruto'
                                         floatingLabelText= 'Bruto'
                                         id='Bruto'
                                         ref='Bruto'
                                         value= {this.state['Bruto']}
                                         onChange={this.handleControlledInputChange}
+                                        onBlur={this.handleControlledInputChange}
                                     />
                                     <TextField
-                                        style={styles.textField}
+                                        style={{marginRight: '5%', display: 'inline-block', verticalAlign: 'top'}}
                                         hintText= 'Tara'
                                         floatingLabelText= 'Tara'
                                         id='Tara'
                                         ref='Tara'
                                         value= {this.state['Tara']}
                                         onChange={this.handleControlledInputChange}
+                                        onBlur={this.handleControlledInputChange}
                                     />
-                                    <TextField  //bruto menos tara
-                                        style={styles.textField}
-                                        hintText= 'Neto'
-                                        floatingLabelText= 'Neto'
+                                    <TextField
+                                        disabled={true}
+                                        style={{display: 'inline-block', verticalAlign: 'top', cursor: 'default', marginTop:'25px'}}
                                         id='Neto'
                                         ref='Neto'
-                                        value= {this.state['Neto']}
-                                        onChange={this.handleControlledInputChange}
+                                        value= {this.state['PesoNeto']}
                                     />
                                     <br/>
-                                    <TextField //viene de merma humedad dropdown
-                                        style={styles.textField}
-                                        hintText= '% Humedad'
-                                        floatingLabelText= '% Humedad'
-                                        id='Humedad'
-                                        ref='Humedad'
-                                        value= {this.state['Humedad']}
-                                        onChange={this.handleControlledInputChange}
-                                    />
+                                    <SelectField
+                                        style={styles.selectField}
+                                        floatingLabelText='Merma Humedad'
+                                        maxHeight={200}
+                                        ref='Merma Humedad'
+                                        value={this.getControlledSelectFieldValue('Merma Humedad')}
+                                        onChange={this.handleControlledSelectFieldValueChange.bind(this,'Merma Humedad')}
+                                    >
+                                        {this.renderSelectFieldsValues('Merma Humedad')}
+                                    </SelectField>
 
-                                    <div style={{marginTop:'10px', padding: '0 0 10px 10px', border: 'solid black 1px'}}>
+                                    <div style={{marginTop:'10px', padding: '0 0 10px 10px'}}>
                                         <p style={{marginBottom: '0'}}>MERMA</p>
                                         <div style={{margin: '0 0 0 10px'}}>
                                             <p style={{display: 'inline-block', verticalAlign: 'bottom', width:'10%'}}>%</p>
@@ -637,6 +725,7 @@ var IngresoDeCerealModTabs = React.createClass ({
                                                 ref='% Humedad'
                                                 value= {this.state['% Humedad']}
                                                 onChange={this.handleControlledInputChange}
+                                                onBlur={this.handleControlledInputChange}
                                             />
                                             <TextField
                                                 style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
@@ -646,6 +735,7 @@ var IngresoDeCerealModTabs = React.createClass ({
                                                 ref='% Zarandeo'
                                                 value= {this.state['% Zarandeo']}
                                                 onChange={this.handleControlledInputChange}
+                                                onBlur={this.handleControlledInputChange}
                                             />
                                             <TextField
                                                 style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
@@ -655,75 +745,52 @@ var IngresoDeCerealModTabs = React.createClass ({
                                                 ref='% Volátil'
                                                 value= {this.state['% Volátil']}
                                                 onChange={this.handleControlledInputChange}
-                                            />
-                                            <TextField
-                                                style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
-                                                hintText= '% Calidad'
-                                                floatingLabelText= '% Calidad'
-                                                id='% Calidad'
-                                                ref='% Calidad'
-                                                value= {this.state['% Calidad']}
-                                                onChange={this.handleControlledInputChange}
+                                                onBlur={this.handleControlledInputChange}
                                             />
                                             <br/>
                                             <p style={{display: 'inline-block', verticalAlign: 'bottom', width:'10%'}}>Kgs.</p>
                                             <TextField
-                                                style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
-                                                hintText= 'Kgs. Humedad'
-                                                floatingLabelText= 'Kgs. Humedad'
+                                                disabled={true}
+                                                style={{cursor: 'default', display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
                                                 id='Kgs. Humedad'
                                                 ref='Kgs. Humedad'
                                                 value= {this.state['Kgs. Humedad']}
-                                                onChange={this.handleControlledInputChange}
                                             />
                                             <TextField
-                                                style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
-                                                hintText= 'Kgs. Zarandeo'
-                                                floatingLabelText= 'Kgs. Zarandeo'
+                                                disabled={true}
+                                                style={{cursor: 'default', display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
                                                 id='Kgs. Zarandeo'
                                                 ref='Kgs. Zarandeo'
                                                 value= {this.state['Kgs. Zarandeo']}
-                                                onChange={this.handleControlledInputChange}
                                             />
                                             <TextField
-                                                style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
-                                                hintText= 'Kgs. Volátil'
-                                                floatingLabelText= 'Kgs. Volátil'
+                                                disabled={true}
+                                                style={{cursor: 'default', display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
                                                 id='Kgs. Volátil'
                                                 ref='Kgs. Volátil'
                                                 value= {this.state['Kgs. Volátil']}
-                                                onChange={this.handleControlledInputChange}
-                                            />
-                                            <TextField
-                                                style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
-                                                hintText= 'Kgs. Calidad'
-                                                floatingLabelText= 'Kgs. Calidad'
-                                                id='Kgs. Calidad'
-                                                ref='Kgs. Calidad'
-                                                value= {this.state['Kgs. Calidad']}
-                                                onChange={this.handleControlledInputChange}
                                             />
 
                                             <TextField
-                                                style={{display: 'inline-block', marginLeft:'10px', verticalAlign: 'top', width:'15%'}}
+                                                disabled={true}
+                                                style={{cursor: 'default', display: 'inline-block', marginLeft:'10px', marginTop:'-24px', verticalAlign: 'top', width:'15%'}}
                                                 hintText= 'Total'
                                                 floatingLabelText= 'Total'
                                                 id='Total'
                                                 ref='Total'
                                                 value= {this.state['Total']}
-                                                onChange={this.handleControlledInputChange}
                                             />
                                         </div>
                                     </div>
                                     <br/>
                                     <TextField
-                                        style={{display: 'inline-block', marginLeft:'15px', verticalAlign: 'top', width:'40%'}}
+                                        disabled={true}
+                                        style={{cursor: 'default', display: 'inline-block', marginLeft:'15px', verticalAlign: 'top'}}
                                         hintText= 'Neto Final'
                                         floatingLabelText= 'Neto Final'
                                         id='Neto Final'
                                         ref='Neto Final'
                                         value= {this.state['Neto Final']}
-                                        onChange={this.handleControlledInputChange}
                                     />
                                 </div>
                                 <br/>
@@ -912,6 +979,7 @@ var IngresoDeCerealModTabs = React.createClass ({
     },
 
     makeRequest: function () {
+
         var currentProductorCuil = this.state.currentProductorCuil;
         var currentDestinatarioCuil = this.state.currentDestinatario;
         var currentRemitenteComercialCuil = this.state.currentRemitenteComercial;
@@ -923,6 +991,7 @@ var IngresoDeCerealModTabs = React.createClass ({
         var currentEspecie = this.state.currentEspecieDesc;
         var currentCosecha = this.state.currentCosechaDesc;
         var currentProcedencia = this.state.currentCampoNombre;
+        var currentMermaHumedad = this.state.currentMermaHumedad;
         var productorSelecionado = '';
         var destinatarioSeleccionado = '';
         var remitenteComercialSeleccionado = '';
@@ -985,10 +1054,11 @@ var IngresoDeCerealModTabs = React.createClass ({
             }
         });
 
+
         var bodyRequested = {
             "nro_cp": this.state['nroCP'],
             "fecha_emision": this.state['Fecha emision'],
-            "ctg": this.state['ctgNro'],
+            "ctg": this.state['C.T.G nro'],
             "flete_corto": this.state['fleteCorto'],
             "fecha_arribo": this.state['Fecha arribo'],
             "productor": productorSelecionado,
@@ -1002,39 +1072,38 @@ var IngresoDeCerealModTabs = React.createClass ({
             "cosecha" : cosechaSeleccionada,
             "calidad" : this.state['currentCalidad'],
             "procedencia" : procedenciaSeleccionada,
-            "kg_bruto" : 1000,
-            "kg_tara" : 35,
-            "kg_neto" : 965,
-            "porc_humedad" : 10,
-            "porc_zarandeo" : 5,
-            "porc_volatil" : 3,
-            "porc_calidad" : 4,
-
+            "kg_bruto" : this.state['Bruto'],
+            "kg_tara" : this.state['Tara'],
+            "kg_neto" : this.state['PesoNeto'],
+            "porc_humedad" : this.state['% Humedad'],
+            "porc_merma_humedad": currentMermaHumedad,
+            "porc_zarandeo" : this.state['% Zarandeo'],
+            "porc_volatil" : this.state['% Volátil'],
+            "kgs_merma_humedad": this.state['Kgs. Humedad'],
+            "kgs_merma_zarandeo": this.state['Kgs. Zarandeo'],
+            "kgs_merma_volatil": this.state['Kgs. Volátil'],
+            "kgs_neto_final": this.state['Neto Final'],
 
             "chofer" : choferSeleccionado,
             "transportista" : transportistaSeleccionado,
-            "patente" : this.state['patente'],
+            "patente" : this.state['Patente'],
             "flete_pago" : this.state.fletePago,
             "tipo_tarifa" : tarifaSeleccionada,
-            "kms_recorridos" : this.state['currentKMSRecorridos'],
+            "kms_recorridos" : this.state['Kms. recorridos'],
             "tarifa" : this.calculateTarifaTotal(),
 
 
             "destinatario": destinatarioSeleccionado,
             "destino": destinoSeleccionado,
-            "observaciones": this.state['observaciones'],
+            "observaciones": this.state['Observaciones'],
             "habilitado": true
         };
 
-
-        console.log('boyRequested', bodyRequested);
-        console.log('states', this.state);
         fetch(this.getRequest(bodyRequested))
             .then((response) => {
                 return response.json()
             })
             .then((response) => {
-                console.log('respuesta: ', response);
                 /*this.setState({
                  items: response.data
                  });*/
@@ -1224,6 +1293,27 @@ var IngresoDeCerealModTabs = React.createClass ({
                 });
             })
     },
+    getAllMermasHumedad: function () {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/mermasHumedad/getAll', {
+            method: 'GET',
+            headers: new Headers({
+                'Content-Type': 'text/plain'
+            })
+        });
+
+        fetch(request)
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                this.setState({
+                    allMermasHumedadEntities: response.data,
+                    mermasHumedadPorc: response.data.map(function (merma) {
+                        return merma['porc_humedad']
+                    })
+                });
+            })
+    },
 
     //PARA RECUPERAR TODOS LOS DATOS DE LAS CP ELEGIDA
     makeModRequest: function () {
@@ -1234,7 +1324,8 @@ var IngresoDeCerealModTabs = React.createClass ({
             .then((response) => {
                 //var values = Object.values(response.data);
                 //var keys = Object.keys(response.data);
-
+                console.log('respuesta: ', response.data);
+                console.log('porc_merma_humedad]: ', response.data['porc_merma_humedad']);
                 this.setState({
                     currentCP: response.data,
                    // fieldsInitialValues: values
@@ -1264,15 +1355,16 @@ var IngresoDeCerealModTabs = React.createClass ({
 
                     currentEspecieDesc: response.data.especie['descripcion'],
                     currentCosechaDesc: response.data.cosecha['descripcion'],
-                    currentCalidad: response.data.calidad,
+                    currentCalidad: response.data['calidad'],
                     currentCampoNombre: response.data.procedencia['nombre'], //procedencia
-                    currentKgBruto: response.data['kg_bruto'],
-                    currentKgTara: response.data['kg_tara'],
-                    currentKgNeto: response.data['kg_neto'],
-                    currentPorcHumedad: response.data['porc_humedad'],
-                    currentPorcZarandeo: response.data['porc_zarandeo'],
-                    currentPorcVolatil: response.data['porc_volatil'],
-                    currentPorcCalidad: response.data['porc_calidad'],
+                    currentMermaHumedad: response.data['porc_merma_humedad'],
+                    Bruto: response.data['kg_bruto'],
+                    Tara: response.data['kg_tara'],
+                    PesoNeto: response.data['kg_neto'],
+                    '% Humedad': response.data['porc_humedad'],
+                    '% Zarandeo': response.data['porc_zarandeo'],
+                    '% Volátil': response.data['porc_volatil'],
+                    '% Calidad': response.data['porc_calidad'],
 
 
                     currentChoferCuil: response.data.chofer['cuil'],

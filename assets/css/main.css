@@ -1,0 +1,29 @@
+body {
+    background-image: url("/assets/background/mainBackground1.jpg");
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+a {
+    text-decoration: none;
+}
+
+a :hover {
+    background-color: rgba(141, 110, 99, 0.5);
+}
+
+span :hover {
+    background-color: rgba(141, 110, 99, 0.5);
+}
+
+span div :hover {
+    text-decoration: none;
+    background-color: rgba(141, 110, 99, 0.0);
+}
+
+a div :hover {
+    text-decoration: none;
+    background-color: rgba(141, 110, 99, 0.0);
+}

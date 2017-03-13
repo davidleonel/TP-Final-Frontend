@@ -5,8 +5,6 @@ import TextField from 'material-ui/TextField';
 import Paper from 'material-ui/Paper';
 import RaisedButton from 'material-ui/RaisedButton';
 
-import TabPanel from '../others/tab-panel';
-
 var MainContentSection = React.createClass ({
 
 
@@ -50,7 +48,6 @@ var MainContentSection = React.createClass ({
                     <RaisedButton label="Aceptar" primary={true} style={{margin: 12}} onTouchTap={this.handleSubmit} />
                 </Paper>
 
-                <TabPanel></TabPanel>
             </div>
         )
     },

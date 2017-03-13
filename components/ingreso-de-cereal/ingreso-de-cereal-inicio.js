@@ -40,23 +40,26 @@ const styles = {
         width: '23%'
     },
     textField: {
-        display: 'inline-block',
-        verticalAlign: 'top'
+        display: 'block'
     },
     selectField: {
-        marginRight: '20px',
-        verticalAlign: 'top',
-        width: '42%'
+        float: 'right',
+        height:'40px',
+        width: '40%'
     },
-    textFieldMain: {
-        display: 'inline-block',
-        verticalAlign: 'top',
-        width: '60%'
+    selectFieldIcon: {
+        height:'18px',
+        padding: '0',
+        top: '-4px'
     },
-    selectFieldMain: {
-        marginRight: '20px',
-        verticalAlign: 'top',
-        width: '60%'
+    selectFieldLabel: {
+        top:'-25'
+    },
+    selectFieldMenu: {
+        height:'50%'
+    },
+    selectFieldHint: {
+        top:'7px'
     },
     datePicker: {
         verticalAlign: 'bottom',
@@ -64,49 +67,13 @@ const styles = {
         width: '30%'
     }
 };
-const tableData = [
-    {
-        name: 'John Smith',
-        status: 'Employed',
-        selected: true
-    },
-    {
-        name: 'Randal White',
-        status: 'Unemployed'
-    },
-    {
-        name: 'Stephanie Sanders',
-        status: 'Employed',
-        selected: true,
-    },
-    {
-        name: 'Steve Brown',
-        status: 'Employed',
-    },
-    {
-        name: 'Joyce Whitten',
-        status: 'Employed',
-    },
-    {
-        name: 'Samuel Roberts',
-        status: 'Employed',
-    },
-    {
-        name: 'Adam Moore',
-        status: 'Employed',
-    },
-];
 
 var IngresioDeCerealInicio = React.createClass ({
 
     propTypes: {
         handleMainSectionChange: React.PropTypes.func
     },
-    getDefaultProps: function() {
-        return {
-            name: 'Mary'
-        };
-    },
+
     getInitialState: function () {
         return {
             fixedHeader: true,
@@ -118,7 +85,7 @@ var IngresioDeCerealInicio = React.createClass ({
             enableSelectAll: false,
             deselectOnClickaway: true,
             showCheckboxes: false,
-            height: '300px',
+
 
 
             items: [],
@@ -218,10 +185,9 @@ var IngresioDeCerealInicio = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                console.log('response', response);
                 this.setState({
                     items: response.data
-                });
+                }, console.log('response', response));
 
             })
 
@@ -289,10 +255,10 @@ var IngresioDeCerealInicio = React.createClass ({
         if (label === 'Chofer') {
             this.setState({
                 currentChoferCuil: payload
-            });
+            }, this.filter());
         }
 
-        this.filter()
+
     },
     renderSelectFieldsValues: function (label) {
         var values;
@@ -311,24 +277,37 @@ var IngresioDeCerealInicio = React.createClass ({
         return values
     },
 
+    handleLimpiarFiltros: function () {
+        console.log('entro al limpiarfiltros');
+        this.setState({
+            fechaDesde : null,
+            fechaHasta: null,
+            chofer: '',
+            currentChoferCuil: '',
+            productor: '',
+            currentProductorCuil: '',
+            'Carta de porte': ''
+        }, this.makeRequest());
+
+
+    },
+
     handleControlledInputChange: function (event) {
         this.setState({
             [event.target.id]: event.target.value
-        });
-
-        this.filter();
+        }, this.filter());
 
     },
 
     render() {
-        console.log('states: ', this.state);
         return (
             <div style={{width:'100%'}}>
                 <Paper zDepth={3} style={{padding: '20px'}}>
                     <div style={{display: 'inline-block', padding: '0', width:'100%'}}>
-                        <div >
+                        <div style={{ width:'40%'}} >
                             <DatePicker
-                                style={{display: 'inline-block', width: '25%'}}
+                                style={{display: 'inline-block', width: '45%', marginRight:'5%'}}
+                                textFieldStyle={{width: '100%'}}
                                 autoOk={true}
                                 DateTimeFormat={global.Intl.DateTimeFormat}
                                 cancelLabel='Cerrar'
@@ -338,8 +317,8 @@ var IngresioDeCerealInicio = React.createClass ({
                                 onChange={this.updateFilterFields.bind(this, 'Fecha desde')}
                             />
                             <DatePicker
-                                 style={{display: 'inline-block',
-                                 width: '25%'}}
+                                 style={{display: 'inline-block', width: '45%', float: 'right'}}
+                                 textFieldStyle={{width: '100%'}}
                                  autoOk={true}
                                  cancelLabel='Cerrar'
                                  hintText='Fecha hasta'
@@ -349,30 +328,40 @@ var IngresioDeCerealInicio = React.createClass ({
                             />
                         </div>
                         <br/>
-                        <SelectField
-                            style={styles.selectField}
-                            floatingLabelText='Chofer'
-                            maxHeight={200}
-                            ref='Chofer'
-                            value={this.getControlledSelectFieldValue('Chofer')}
-                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Chofer')}
-                        >
-                            {this.renderSelectFieldsValues('Chofer')}
-                        </SelectField>
+                        <div>
+                            <SelectField
+                                labelStyle={styles.selectFieldLabel}
+                                iconStyle={styles.selectFieldIcon}
+                                style={{height:'40px', width: '40%', float:'left'}}
+                                menuStyle={styles.selectFieldMenu}
+                                floatingLabelStyle={styles.selectFieldHint}
+                                floatingLabelText='Chofer'
+                                maxHeight={200}
+                                ref='Chofer'
+                                value={this.getControlledSelectFieldValue('Chofer')}
+                                onChange={this.handleControlledSelectFieldValueChange.bind(this,'Chofer')}
+                            >
+                                {this.renderSelectFieldsValues('Chofer')}
+                            </SelectField>
+                            <SelectField
+                                labelStyle={styles.selectFieldLabel}
+                                iconStyle={styles.selectFieldIcon}
+                                style={{float: 'right', height:'40px', width: '40%', marginRight:'10%'}}
+                                menuStyle={styles.selectFieldMenu}
+                                floatingLabelStyle={styles.selectFieldHint}
+                                floatingLabelText='Productor'
+                                maxHeight={200}
+                                ref='Productor'
+                                value={this.getControlledSelectFieldValue('Productor')}
+                                onChange={this.handleControlledSelectFieldValueChange.bind(this,'Productor')}
+                            >
+                                {this.renderSelectFieldsValues('Productor')}
+                            </SelectField>
+                        </div>
                         <br/>
-                        <SelectField
-                            style={styles.selectField}
-                            floatingLabelText='Productor'
-                            maxHeight={200}
-                            ref='Productor'
-                            value={this.getControlledSelectFieldValue('Productor')}
-                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Productor')}
-                        >
-                            {this.renderSelectFieldsValues('Productor')}
-                        </SelectField>
                         <br/>
                         <TextField
-                            style={{height:'60px'}}
+                            style={styles.textField}
                             floatingLabelStyle={{lineHeight:'10px'}}
                             hintStyle={{bottom:'7px'}}
                             hintText='Carta de porte'
@@ -385,12 +374,9 @@ var IngresioDeCerealInicio = React.createClass ({
                     </div>
                     <br/>
                     <br/>
-                    <br/>
-                    <br/>
-                    <br/>
                     <div>
                         <Table
-                            height={this.state.height}
+                            height={'450px'}
                             fixedHeader={this.state.fixedHeader}
                             fixedFooter={this.state.fixedFooter}
                             selectable={this.state.selectable}
@@ -403,17 +389,25 @@ var IngresioDeCerealInicio = React.createClass ({
                                 enableSelectAll={this.state.enableSelectAll}
                             >
                                 <TableRow>
-                                    <TableHeaderColumn colSpan="8" tooltip="Super Header" style={{textAlign: 'right'}}>
-                                        Para modificar una CP solo debe clickearla
+                                    <TableHeaderColumn colSpan="4" tooltip="Limpiar filtro" style={{textAlign: 'left', paddingLeft:'0px'}}>
+                                        <RaisedButton
+                                            style={{margin:'10px 0px'}}
+                                            backgroundColor="#8BC34A"
+                                            label="Limpiar"
+                                            onTouchTap={this.handleLimpiarFiltros}
+                                        />
+                                    </TableHeaderColumn>
+                                    <TableHeaderColumn colSpan="4" tooltip="Agregar una nueva carta de porte" style={{textAlign: 'right'}}>
+                                        Para modificar una CP solo debe seleccionarla, para agregar una nueva haga click en "Agregar".
                                         <RaisedButton
                                             style={{margin:'10px'}}
                                             backgroundColor="#8BC34A"
-                                            label="Agregar CP"
+                                            label="Agregar"
                                             onTouchTap={this.handleAgregarCP}
                                         />
                                     </TableHeaderColumn>
                                 </TableRow>
-                                <TableRow>
+                                <TableRow style={{width: '100%'}}>
                                     <TableHeaderColumn tooltip="Carta de Porte">Carta de Porte</TableHeaderColumn>
                                     <TableHeaderColumn tooltip="Fecha Emision">Fecha Emision</TableHeaderColumn>
                                     <TableHeaderColumn tooltip="KG. Bruto">KG. Bruto</TableHeaderColumn>
@@ -437,7 +431,7 @@ var IngresioDeCerealInicio = React.createClass ({
                             >
                                 <TableRow>
                                     <TableRowColumn colSpan="3" style={{textAlign: 'center'}}>
-                                        Super Footer
+
                                     </TableRowColumn>
                                 </TableRow>
                             </TableFooter>
@@ -536,12 +530,6 @@ var IngresioDeCerealInicio = React.createClass ({
             })
     },
 
-
-    handleSelection: function (rowNumber, columnId) {
-        var selectedItem = this.state.items[rowNumber];
-
-        browserHistory.push('ingresodecereal/mod/' + selectedItem['_id']);
-    }
 
 });
 

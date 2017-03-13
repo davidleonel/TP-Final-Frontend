@@ -5,7 +5,6 @@ import {Router, Route, browserHistory, IndexRoute} from 'react-router';
 
 import MainPage from './components/main/main-page';
 import MainWelcomeSection from './components/main/main-welcome-section';
-import MainContentSection from './components/main/main-content-section';
 
 import RoutingComponent from './components/routing-component';
 
@@ -13,9 +12,13 @@ import IngresoDeCerealMainPage from './components/ingreso-de-cereal/ingreso-de-c
 import IngresoDeCerealMainTabs from './components/ingreso-de-cereal/ingreso-de-cereal-main-tabs';
 import IngresoDeCerealModTabs from './components/ingreso-de-cereal/ingreso-de-cereal-mod-tabs';
 
-import LoginPage from './components/login/login-page';
 
 import AnalisisMainPage from './components/analisis/analisis-main-page';
+import AnalisisNuevoAnalisis from './components/analisis/analisis-nuevo-analisis';
+import AnalisisModTabs from './components/analisis/analisis-mod-tabs';
+
+import CertificadoDeDepositoMainPage from './components/certificado-de-deposito/certificado-de-deposito-main-page';
+import CertificadoDeDepositoNuevoCertificado from './components/certificado-de-deposito/certificado-de-deposito-nuevo-certificado';
 
 var App = React.createClass ({
 
@@ -34,9 +37,12 @@ var App = React.createClass ({
                     <Route path={'ingresodecereal/altaCP'} component={IngresoDeCerealMainTabs} />
                     <Route path={'ingresodecereal/mod/(:identifier)'} component={IngresoDeCerealModTabs} />
 
-
-
                     <Route path={'analisis'} component={AnalisisMainPage}  />
+                    <Route path={'analisis/nuevoAnalisis'} component={AnalisisNuevoAnalisis} />
+                    <Route path={'analisis/mod/(:identifier)'} component={AnalisisModTabs} />
+
+                    <Route path={'certificadoDeDeposito'} component={CertificadoDeDepositoMainPage}  />
+                    <Route path={'certificadodedeposito/nuevoCertificadoDeDeposito'} component={CertificadoDeDepositoNuevoCertificado} />
 
                 </Route>
             </Router>

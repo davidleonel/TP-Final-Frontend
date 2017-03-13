@@ -6,7 +6,7 @@ import MainMenuBar from './main-menu-bar';
 //***********THEME********************
 import {
     lightGreen500, lightGreen700, lightGreen400,
-    redA200,
+    redA200,brown400,
     grey100, grey300, grey400, grey500,
     cyan500,
     white, darkBlack, fullBlack,
@@ -21,7 +21,7 @@ const muiTheme = getMuiTheme({
         primary1Color: lightGreen500,
         primary2Color: lightGreen700,
         primary3Color: lightGreen400,
-        accent1Color: redA200,
+        accent1Color: brown400,
         accent2Color: grey100,
         accent3Color: grey500,
         textColor: darkBlack,

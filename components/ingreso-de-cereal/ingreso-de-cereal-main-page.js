@@ -7,7 +7,7 @@ var IngresoDeCerealMainPage = React.createClass ({
     render() {
         return (
             <div style={{
-                    margin: '20px 0 70px 0',
+                    margin: '20px 0 13px 0',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems:'center'
@@ -20,6 +20,3 @@ var IngresoDeCerealMainPage = React.createClass ({
 });
 
 export default IngresoDeCerealMainPage;
-
-
-//<IngresoDeCerealMainTabs />

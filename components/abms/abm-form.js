@@ -10,6 +10,8 @@ import MenuItem from 'material-ui/MenuItem';
 import DatePicker from 'material-ui/DatePicker';
 import Checkbox from 'material-ui/Checkbox';
 
+import DoneAllIcon from 'react-material-icons/icons/action/done-all';
+
 
 const styles = {
     mainDiv: {
@@ -21,13 +23,14 @@ const styles = {
 
     mainPaper:{
         padding: '20px',
-        width: '800px'
+        width: '620px'
     },
     formFieldsDiv: {
-        padding:'0 20px 0 20px'
+        padding:'0 40px'
     },
     botonAltaAceptar: {
-        margin: 12
+        margin: 12,
+        float: 'right'
     },
     toggle: {
         marginBottom: 16
@@ -57,6 +60,8 @@ var AltaForm = React.createClass ({
 
     getInitialState: function () {
         return {
+            rubrosSelected: [],
+            currentRubrosDeEspecie: [],
             transportistasCod: [],
             localidadesDesc: [],
             productoresCuil: [],
@@ -118,6 +123,7 @@ var AltaForm = React.createClass ({
                     </div>
 
                     <RaisedButton
+                        icon={<DoneAllIcon style={{paddingBottom: '6px'}} />}
                         style={styles.botonAltaAceptar}
                         backgroundColor="#8BC34A"
                         label="Aceptar"
@@ -133,7 +139,6 @@ var AltaForm = React.createClass ({
         var label;
         var node;
 
-        label = "Ingrese " + item.label + " por favor.";
 
         if (item.type === 'input') {
             node = (
@@ -148,8 +153,8 @@ var AltaForm = React.createClass ({
                     ref={[item.label]}
                     onChange={this.handleControlledInputChange}
                     value= {this.state[item.label]}
-                    hintText= {label}
-                    floatingLabelText= {item.label}
+                    hintText= {this.toTitleCase(item.label)}
+                    floatingLabelText= {this.toTitleCase(item.label)}
                     key= {key}
                     id={item.label}
                 />
@@ -165,8 +170,8 @@ var AltaForm = React.createClass ({
                     ref={[item.label]}
                     onChange={this.handleControlledInputChange}
                     value= {this.state[item.label]}
-                    hintText={item.label}
-                    floatingLabelText={item.label}
+                    hintText={this.toTitleCase(item.label)}
+                    floatingLabelText={this.toTitleCase(item.label)}
                     type="password" fullWidth
                     key= {key}
                     id={item.label}
@@ -180,7 +185,7 @@ var AltaForm = React.createClass ({
                     style={{marginBottom: '16',marginTop: '26px'}}
                     labelStyle={{width:'auto', marginRight:'142px'}}
                     ref={[item.label]}
-                    label= {item.label}
+                    label= {this.toTitleCase(item.label)}
                     key= {key}
                     defaultToggled={this.getDefaultToggleValue()}
                     onToggle={this.setHabilitadoValue}
@@ -199,7 +204,7 @@ var AltaForm = React.createClass ({
                     underlineFocusStyle={{borderColor: '#4CAF50'}}
                     floatingLabelFocusStyle={{color: '#4CAF50'}}
                     ref={[item.label]}
-                    floatingLabelText={item.label}
+                    floatingLabelText={this.toTitleCase(item.label)}
                     value={this.getControlledSelectFieldValue(item.label)}
                     onChange={this.handleControlledSelectFieldValueChange.bind(this, item.label)}
                     maxHeight={200}
@@ -220,11 +225,11 @@ var AltaForm = React.createClass ({
                     underlineStyle={{borderColor: '#8BC34A'}}
                     underlineFocusStyle={{borderColor: '#4CAF50'}}
                     floatingLabelFocusStyle={{color: '#4CAF50'}}
-                    floatingLabelText={item.label}
+                    floatingLabelText={this.toTitleCase(item.label)}
                     autoOk={true}
                     cancelLabel='Cerrar'
                     ref={[item.label]}
-                    hintText={item.label}
+                    hintText={this.toTitleCase(item.label)}
                     mode="landscape"
                     key= {key}
                     />
@@ -243,26 +248,82 @@ var AltaForm = React.createClass ({
 
         return node;
     },
+
+    toTitleCase: function (str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    },
     
     renderRubrosCheckBoxGroup: function () {
-        var group = this.state.rubrosDesc.map(function (value, key) {
-                        return (
-                            <Checkbox
-                                ref={key}
-                                onCheck={this.rubroCheckboxSelect}
-                                label={value}
-                                style={styles.checkbox}
-                            />
-                        )
-                    });
+        var group = this.state.rubrosDesc.map(this.renderRubroCheckBox);
         
         return group
     },
 
-    rubroCheckboxSelect: function (event, checked) {
-        console.log('event: ', event);
-        console.log('checked: ', checked);
+    renderRubroCheckBox: function (value, key) {
+        return (
+            <Checkbox
+                onCheck={this.rubroCheckboxSelect.bind(this, value)}
+                label={value}
+                style={styles.checkbox}
+                defaultChecked={this.defaultRubroCheckbox(value)}
+            />
+        )
     },
+
+    cleanRubrosDeEspecie: function () {
+        var rubrosDeEspecies = this.state.currentRubrosDeEspecie;
+        var rubros = [];
+
+        rubrosDeEspecies.forEach(function (r) {
+            rubros.push(r['rubro']);
+        });
+
+        this.setState({
+            currentRubrosDeEspecie: rubros
+        });
+
+    },
+
+    defaultRubroCheckbox: function (value) {
+        var currentRubros = this.state.currentRubrosDeEspecie;
+        var checked = false;
+
+
+        this.state.allRubrosEntities.forEach(function (rubro) {
+            currentRubros.forEach(function (rubroDeEspecie) {
+                 if (rubro['_id'] === rubroDeEspecie && rubro['descripcion'] === value) {
+                     checked = true
+                 }
+            });
+        });
+
+        return checked
+
+    },
+
+    rubroCheckboxSelect: function (value, event, checked) {
+        var rubrosSelected = this.state.rubrosSelected;
+
+        this.state.allRubrosEntities.forEach( function (rubro, index) {
+                if (rubro.descripcion === value) {
+                    if (checked === true) {
+                        rubrosSelected.push(rubro["_id"]);
+                    }
+
+                    if (checked === false) {
+                        _.pull(rubrosSelected, rubro["_id"]);
+                    }
+                }
+        });
+
+        this.setState({
+            rubrosSelected: rubrosSelected
+        });
+
+    },
+
+
+
 
     //SETS THE VALUES FOR THE CORRESPONDING DROPDOWNS
     renderSelectFieldsValues: function (label) {
@@ -446,6 +507,16 @@ var AltaForm = React.createClass ({
             object = _.extend(object, {transportista: transportistaSelecionado['_id']});
         }
 
+        if (this.props.entity === 'especie')  {
+            var rubrosSeleccionados = [];
+            var rubrosSeleccionadosID = this.state.rubrosSelected;
+
+            rubrosSeleccionadosID.forEach(function (rubroID, index) {
+                rubrosSeleccionados.push({"rubro": rubroID})
+            });
+            object = _.omit(object, ['transportista']);
+            object = _.extend(object, {rubros: rubrosSeleccionados});
+        }
 
         if (this.props.type === 'Alta') {
             this.handleAltaRequest(object);
@@ -475,7 +546,6 @@ var AltaForm = React.createClass ({
                 console.log('respuesta: ', response);
             })
     },
-
     handleModRequest: function (requestBody) {
         var entidad = this.getEntidad();
         var bodyJson = JSON.stringify(requestBody);
@@ -516,66 +586,66 @@ var AltaForm = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                var values = Object.values(response.data);
-                var keys = Object.keys(response.data);
+                console.log('response.data ', response);
 
-                this.setState({
-                    items: response.data,
-                    fieldsInitialValues: values
-                }, function () {
+                if (response.data) {
+                    var values = Object.values(response.data);
+                    var keys = Object.keys(response.data);
 
-                });
+                    this.setState({
+                        items: response.data,
+                        fieldsInitialValues: values
+                    }, function () {
 
-                //TO LOAD THE CURRENT VALUE FOR THE DROPDOWN FIELDS
-                if (this.props.entity === 'chofer') {
-                    this.setState({
-                        currentRazonSocialTransportista: response.data.transportista['razon_social'],
-                        currentIva: response.data.iva,
-                        //currentLocalidadDesc: response.data.localidad
                     });
-                }
-                if (this.props.entity === 'camion') {
-                    this.setState({
-                        currentEstadoCamion: response.data.estado
-                    });
-                }
-                if (this.props.entity === 'transportista') {
-                    this.setState({
-                       // currentLocalidadDesc: response.data.localidad
-                    });
-                }
-                if (this.props.entity === 'productor') {
-                    this.setState({
-                       // currentLocalidadDesc: response.data.localidad
-                    });
-                }
-                if (this.props.entity === 'campo') {
-                    this.setState({
-                        //currentLocalidadDesc: response.data.localidad,
-                        currentProductorCuil: response.data.productor['cuil']
-                    });
-                }
-                if (this.props.entity === 'mermasHumedad') {
-                    if (response.data.especie) {
+
+                    //TO LOAD THE CURRENT VALUE FOR THE DROPDOWN FIELDS
+                    if (this.props.entity === 'chofer') {
                         this.setState({
-                            currentEspecieDesc: response.data.especie['descripcion']
-                        });
-                    } else {
-                        this.setState({
-                            currentEspecieDesc: 'Sin especificar'
+                            currentRazonSocialTransportista: response.data.transportista['razon_social'],
+                            currentIva: response.data.iva
                         });
                     }
+                    if (this.props.entity === 'camion') {
+                        this.setState({
+                            currentEstadoCamion: response.data.estado
+                        });
+                    }
+                    if (this.props.entity === 'campo') {
+                        this.setState({
+                            currentProductorCuil: response.data.productor['cuil']
+                        });
+                    }
+                    if (this.props.entity === 'mermasHumedad') {
+                        if (response.data.especie) {
+                            this.setState({
+                                currentEspecieDesc: response.data.especie['descripcion']
+                            });
+                        } else {
+                            this.setState({
+                                currentEspecieDesc: 'Sin especificar'
+                            });
+                        }
 
-                }
-                if (this.props.entity === 'empresa') {
-                    this.setState({
-                        //currentLocalidadDesc: response.data.localidad
-                    });
+                    }
+                    if (this.props.entity === 'especie') {
+                        if (response.data.rubros) {
+                            this.setState({
+                                currentRubrosDeEspecie: response.data.rubros
+                            });
+                            this.cleanRubrosDeEspecie();
+                        }
+                    }
+
+                    keys.forEach(this.setFieldsValues);
+
+                } else {
+                    console.log('response: ', response);
                 }
 
-                keys.forEach(this.setFieldsValues);
             })
     },
+    
     getRequest: function () {
         var request = new Request('https://proyecto-final-prim.herokuapp.com/' + this.props.requestParameters.url, {
             method: this.props.requestParameters.method,

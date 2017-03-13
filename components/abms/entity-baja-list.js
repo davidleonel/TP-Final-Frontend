@@ -7,10 +7,12 @@ import Paper from 'material-ui/Paper';
 import FloatingActionButton from 'material-ui/FloatingActionButton';
 import ContentAdd from '../../node_modules/material-ui/svg-icons/content/add';
 import RaisedButton from 'material-ui/RaisedButton';
-import ActionAndroid from 'material-ui/svg-icons/action/android';
 import FontIcon from 'material-ui/FontIcon';
 import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
+
+import DeleteIcon from 'react-material-icons/icons/action/delete';
+import WarningIcon from 'react-material-icons/icons/alert/warning';
 
 const styles = {
     propContainer: {
@@ -96,7 +98,6 @@ var EntityBajaList = React.createClass ({
 
                         <TableBody
                             displayRowCheckbox= {true}
-                            deselectOnClickaway= {true}
                             showRowHover= {true}
                             stripedRows= {false}
                             deselectOnClickaway={false}
@@ -108,17 +109,20 @@ var EntityBajaList = React.createClass ({
                         <TableFooter
                             adjustForCheckbox={this.state.showCheckboxes}
                         >
-                            <TableRow>
-                                <RaisedButton
-                                    label="Eliminar"
-                                    labelPosition="before"
-                                    primary={true}
-                                    icon={<ActionAndroid />}
-                                    style={styles.button}
-                                    onTouchTap={this.handleEliminar}
-                                />
+                            <TableRow colSpan={this.props.headers.length} >
+                                <TableRowColumn colSpan={this.props.headers.length} style={{textAlign: 'center', 'text-align': 'right', 'padding-bottom': '14px'}}>
+                                    <RaisedButton
+                                        label="Eliminar"
+                                        labelPosition="before"
+                                        primary={true}
+                                        icon={<DeleteIcon style={{paddingBottom: '6px'}} />}
+                                        style={styles.button}
+                                        onTouchTap={this.handleEliminar}
+                                        />
+                                </TableRowColumn>
+
                                 <Dialog
-                                    title="Se estan por dar de baja registros."
+                                    title={"Se estan por dar de baja registros."}
                                     actions={[
                                         <FlatButton
                                             label="Cancelar"
@@ -134,8 +138,10 @@ var EntityBajaList = React.createClass ({
                                     ]}
                                     modal={false}
                                     open={this.state.deleteConfirmationModal}
-                                >
-                                    {'Esta seguro que quiere dar de baja ' + this.state.selectedRowsArray.length + ' registros?'}
+                                >   <div style={{marginBottom:'25px', marginTop:'-9px'}}>
+                                        {<span>{'Esta seguro que quiere dar de baja ' + this.state.selectedRowsArray.length + ' registros?'}</span>}
+                                        {<WarningIcon  style={{height:'90px', width:'90px', marginBottom: '-39px', marginLeft:'35%'}} />}
+                                    </div>
                                 </Dialog>
                             </TableRow>
                             <TableRow>
