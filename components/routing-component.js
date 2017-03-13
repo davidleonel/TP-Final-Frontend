@@ -45,6 +45,7 @@ const destinoAltaFormFields = [
 ];
 const especieAltaFormFields = [
     {label: 'descripcion', type: 'input'},
+    {label: 'rubro', type: 'checkbox-group'},
     {label: 'habilitado', type: 'toggle'}
 ];
 const mermasHumedadAltaFormFields = [

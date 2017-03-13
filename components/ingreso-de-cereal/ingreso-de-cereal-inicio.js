@@ -102,13 +102,11 @@ var IngresioDeCerealInicio = React.createClass ({
     propTypes: {
         handleMainSectionChange: React.PropTypes.func
     },
-
     getDefaultProps: function() {
         return {
             name: 'Mary'
         };
     },
-
     getInitialState: function () {
         return {
             fixedHeader: true,
@@ -143,7 +141,6 @@ var IngresioDeCerealInicio = React.createClass ({
         }
 
     },
-
     componentDidUpdate: function (nextProps, nextState) {
         if (this.state.currentChoferCuil != nextState.currentChoferCuil){
             this.filter();
@@ -153,14 +150,12 @@ var IngresioDeCerealInicio = React.createClass ({
             this.filter();
         }
     },
-
     componentDidMount: function() {
         this.getAllProductores();
         this.getAllChoferes();
 
         this.makeRequest();
     },
-
     makeRequest: function () {
         fetch(this.getRequest())
             .then((response) => {
@@ -172,7 +167,6 @@ var IngresioDeCerealInicio = React.createClass ({
                 });
             })
     },
-
     getRequest: function () {
         var request = new Request('http://proyecto-final-prim.herokuapp.com/ingresoCereal/getAll', {
             method: 'GET',
@@ -183,9 +177,6 @@ var IngresioDeCerealInicio = React.createClass ({
 
         return request
     },
-
-
-
 
     updateFilterFields: function (field, event, date) {
         var day = date.getDate();
@@ -276,8 +267,6 @@ var IngresioDeCerealInicio = React.createClass ({
         return section
     },
 
-
-
     getControlledSelectFieldValue: function (label) {
         var value='';
 
@@ -322,9 +311,6 @@ var IngresioDeCerealInicio = React.createClass ({
         return values
     },
 
-
-
-
     handleControlledInputChange: function (event) {
         this.setState({
             [event.target.id]: event.target.value
@@ -333,7 +319,6 @@ var IngresioDeCerealInicio = React.createClass ({
         this.filter();
 
     },
-
 
     render() {
         console.log('states: ', this.state);

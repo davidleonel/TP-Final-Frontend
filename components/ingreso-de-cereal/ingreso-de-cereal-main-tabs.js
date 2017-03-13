@@ -106,6 +106,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
             transportistasRazonSocial:[],
             tarifasDesc:[],
             destinosDesc:[],
+            calidades: ['Conforme', 'Condicional'],
 
 
             currentProductorCuil:'',
@@ -114,22 +115,25 @@ var IngresoDeCerealMainTabs = React.createClass ({
             currentCalidad:'',
             currentCampoNombre:'',
             currentChoferCuil:'',
-            currentTransportistaCuit:'',
+            currentTransportistaRazonSocial:'',
             currentTarifaDesc:'',
             currentDestinatario:'',
             currentDestinoDesc:'',
+            currentRemitenteComercial:'',
+            currentIntermediario:'',
 
-            'CP nro.': ''
+            nroCP: '',
+
+            fleteCorto: false,
+            fletePago: false,
 
         }
 
     },
-
     componentDidMount: function() {
         this.getAllProductores();
         this.getAllEspecies();
         this.getAllCosechas();
-        this.getAllCalidades();
         this.getAllProcedencias();
         this.getAllChoferes();
         this.getAllTransportistas();
@@ -182,16 +186,22 @@ var IngresoDeCerealMainTabs = React.createClass ({
             value = this.state.currentChoferCuil;
         }
         if (label === 'Transportista') {
-            value = this.state.currentTransportistaCuit;
+            value = this.state.currentTransportistaRazonSocial;
         }
         if (label === 'Tarifa') {
             value = this.state.currentTarifaDesc;
         }
-        if (label === 'Destinatatio') {
+        if (label === 'Destinatario') {
             value = this.state.currentDestinatario;
         }
         if (label === 'Destino') {
             value = this.state.currentDestinoDesc;
+        }
+        if (label === 'RemitenteComercial') {
+            value = this.state.currentRemitenteComercial;
+        }
+        if (label === 'Intermediario') {
+            value = this.state.currentIntermediario;
         }
 
 
@@ -231,7 +241,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
         }
         if (label === 'Transportista') {
             this.setState({
-                currentTransportistaCuit: payload
+                currentTransportistaRazonSocial: payload
             });
         }
         if (label === 'Tarifa') {
@@ -258,6 +268,16 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 currentDestinoDesc: payload
             });
         }
+        if (label === 'RemitenteComercial') {
+            this.setState({
+                currentRemitenteComercial: payload
+            });
+        }
+        if (label === 'Intermediario') {
+            this.setState({
+                currentIntermediario: payload
+            });
+        }
 
 
     },
@@ -279,8 +299,8 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 return <MenuItem value={value} key={key} primaryText={value}/>
             })
         }
-        if (label === 'Calidad') { //i dont know hay que preguntar
-            values = this.state.productoresCuil.map(function (value, key) {
+        if (label === 'Calidad') {
+            values = this.state.calidades.map(function (value, key) {
                 return <MenuItem value={value} key={key} primaryText={value}/>
             })
         }
@@ -314,12 +334,22 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 return <MenuItem value={value} key={key} primaryText={value}/>
             })
         }
+        if (label === 'RemitenteComercial') {
+            values = this.state.productoresCuil.map(function (value, key) {
+                return <MenuItem value={value} key={key} primaryText={value}/>
+            })
+        }
+        if (label === 'Intermediario') {
+            values = this.state.productoresCuil.map(function (value, key) {
+                return <MenuItem value={value} key={key} primaryText={value}/>
+            })
+        }
 
         return values
     },
 
 
-    setDatesValues: function (ref, event, date) {
+    /*setDatesValues: function (ref, event, date) {
 
         if (ref === 'Fecha emision') {
             this.setState({
@@ -336,13 +366,35 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 'Fecha vencimiento': date
             });
         }
-    },
+    },*/
 
     calculateTarifaTotal: function () {
         return (
             this.state.currentTarifaTarifa  * this.state['Kms. recorridos']
         )
 
+    },
+
+    formatDate: function (ref, event, date) {
+        var day = date.getDate();
+        var month = date.getMonth() + 1;
+        var year = date.getFullYear();
+
+        if (ref === 'Fecha emision') {
+            this.setState({
+                'Fecha emision': year + '/' + month + '/' + day
+            });
+        }
+        if (ref === 'Fecha arribo') {
+            this.setState({
+                'Fecha arribo': year + '/' + month + '/' + day
+            });
+        }
+        if (ref === 'Fecha vencimiento') {
+            this.setState({
+                'Fecha vencimiento': year + '/' + month + '/' + day
+            });
+        }
     },
 
 
@@ -368,7 +420,6 @@ var IngresoDeCerealMainTabs = React.createClass ({
                     onChangeIndex={this.handleChange}
                     >
                     <div>
-                        //REMITENTE
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
 
@@ -377,9 +428,9 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                         style={styles.textField}
                                         hintText= 'CP nro.'
                                         floatingLabelText= 'CP nro.'
-                                        id='CP nro.'
-                                        ref='CP nro.'
-                                        value= {this.state['CP nro.']}
+                                        id='nroCP'
+                                        ref='nroCP'
+                                        value= {this.state['nroCP']}
                                         onChange={this.handleControlledInputChange}
                                     />
                                 </div>
@@ -408,9 +459,9 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                 </div>
                                 <br/>
                                 <div style={{width:'100%'}}>
-                                    <DatePicker style={styles.datePicker} hintText='Fecha emisión' mode="landscape" ref='Fecha emision' onChange={this.setDatesValues.bind(this, 'Fecha emision')} />
+                                    <DatePicker style={styles.datePicker} hintText='Fecha emisión' mode="landscape" ref='Fecha emision' onChange={this.formatDate.bind(this, 'Fecha emision')} />
 
-                                    <DatePicker style={styles.datePicker} hintText='Fecha de arribo' mode="landscape" ref='Fecha arribo' onChange={this.setDatesValues.bind(this, 'Fecha arribo')} />
+                                    <DatePicker style={styles.datePicker} hintText='Fecha de arribo' mode="landscape" ref='Fecha arribo' onChange={this.formatDate.bind(this, 'Fecha arribo')} />
                                     <br />
                                     <SelectField
                                         style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
@@ -432,33 +483,34 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                         value= {this.state['CEE']}
                                         onChange={this.handleControlledInputChange}
                                     />
-                                    <DatePicker style={styles.datePicker} hintText='Fecha vencimiento' mode="landscape" ref='Fecha vencimiento' onChange={this.setDatesValues.bind(this, 'Fecha vencimiento')}  />
+                                    <DatePicker style={styles.datePicker} hintText='Fecha vencimiento' mode="landscape" ref='Fecha vencimiento' onChange={this.formatDate.bind(this, 'Fecha vencimiento')}  />
                                     <br />
-                                    <TextField
-                                        style={{marginRight:'30px', verticalAlign: 'top', width:'30%'}}
-                                        hintText= 'remitent'
-                                        floatingLabelText= 'Remitente comercial'
-                                        id= 'Remitente comercial'
-                                        ref= 'Remitente comercial'
-                                        value= {this.state['Remitente comercial']}
-                                        onChange={this.handleControlledInputChange}
-                                    />
+                                    <SelectField
+                                        style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
+                                        floatingLabelText='Remitente Comercial'
+                                        maxHeight={200}
+                                        ref='RemitenteComercial'
+                                        value={this.getControlledSelectFieldValue('RemitenteComercial')}
+                                        onChange={this.handleControlledSelectFieldValueChange.bind(this,'RemitenteComercial')}
+                                        >
+                                        {this.renderSelectFieldsValues('RemitenteComercial')}
+                                    </SelectField>
                                     <br />
-                                    <TextField
-                                        style={{marginRight:'30px', verticalAlign: 'top', width:'30%'}}
-                                        hintText= 'Intermediario'
-                                        floatingLabelText= 'Intermediario'
-                                        id= 'Intermediario'
-                                        ref= 'Intermediario'
-                                        value= {this.state['Intermediario']}
-                                        onChange={this.handleControlledInputChange}
-                                    />
+                                    <SelectField
+                                        style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
+                                        floatingLabelText='Intermediario'
+                                        maxHeight={200}
+                                        ref='Intermediario'
+                                        value={this.getControlledSelectFieldValue('Intermediario')}
+                                        onChange={this.handleControlledSelectFieldValueChange.bind(this,'Intermediario')}
+                                        >
+                                        {this.renderSelectFieldsValues('Intermediario')}
+                                    </SelectField>
                                 </div>
                             </Paper>
                         </div>
                     </div>
                     <div>
-                        //GRANOS
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
                                 <div style={{padding: '0 0 10px 10px', border: 'solid black 1px'}}>
@@ -654,7 +706,6 @@ var IngresoDeCerealMainTabs = React.createClass ({
                         </div>
                     </div>
                     <div>
-                        //TRANSPORTE
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
                                 <div style={{padding: '0 0 10px 10px', border: 'solid black 1px'}}>
@@ -737,7 +788,6 @@ var IngresoDeCerealMainTabs = React.createClass ({
                         </div>
                     </div>
                     <div>
-                        //DESTINATARIO
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
                                 <div style={{padding: '0 0 10px 10px', border: 'solid black 1px'}}>
@@ -814,15 +864,19 @@ var IngresoDeCerealMainTabs = React.createClass ({
 
         var currentProductorCuil = this.state.currentProductorCuil;
         var currentDestinatarioCuil = this.state.currentDestinatario;
+        var currentRemitenteComercialCuil = this.state.currentRemitenteComercial;
+        var currentIntermediarioCuil = this.state.currentIntermediario;
         var currentDestinoDesc = this.state.currentDestinoDesc;
         var currentChoferCuil = this.state.currentChoferCuil;
-        var currentTransportista = this.state.currentTransportistaCuit;
+        var currentTransportista = this.state.currentTransportistaRazonSocial;
         var currentTarifa = this.state.currentTarifaDesc;
         var currentEspecie = this.state.currentEspecieDesc;
         var currentCosecha = this.state.currentCosechaDesc;
         var currentProcedencia = this.state.currentCampoNombre;
         var productorSelecionado = '';
         var destinatarioSeleccionado = '';
+        var remitenteComercialSeleccionado = '';
+        var intermediarioSeleccionado = '';
         var destinoSeleccionado = '';
         var choferSeleccionado ='';
         var transportistaSeleccionado = '';
@@ -838,6 +892,12 @@ var IngresoDeCerealMainTabs = React.createClass ({
             if (productor['cuil'] === currentDestinatarioCuil) {
                 destinatarioSeleccionado = productor['_id'];
             }
+            if (productor['cuil'] === currentRemitenteComercialCuil) {
+                remitenteComercialSeleccionado = productor['_id'];
+            }
+            if (productor['cuil'] === currentIntermediarioCuil) {
+                intermediarioSeleccionado = productor['_id'];
+            }
         });
         this.state.allDestinosEntities.forEach(function (destino) {
             if (destino['descripcion'] === currentDestinoDesc) {
@@ -850,7 +910,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
             }
         });
         this.state.allTransportistasEntities.forEach(function (transportista) {
-            if (transportista['cuit'] === currentTransportista) {
+            if (transportista['razon_social'] === currentTransportista) {
                 transportistaSeleccionado = transportista['_id'];
             }
         });
@@ -859,12 +919,12 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 tarifaSeleccionada = tarifa['_id'];
             }
         });
-        this.state.allTarifasEntities.forEach(function (especie) {
+        this.state.allEspeciesEntities.forEach(function (especie) {
             if (especie['descripcion'] === currentEspecie) {
                 especieSeleccionada = especie['_id'];
             }
         });
-        this.state.allTarifasEntities.forEach(function (cosecha) {
+        this.state.allCosechasEntities.forEach(function (cosecha) {
             if (cosecha['descripcion'] === currentCosecha) {
                 cosechaSeleccionada = cosecha['_id'];
             }
@@ -877,31 +937,31 @@ var IngresoDeCerealMainTabs = React.createClass ({
 
 
         var bodyRequested = {
-            "nro_cp": this.state['CP nro'],
+            "nro_cp": this.state['nroCP'],
             "fecha_emision": this.state['Fecha emision'],
             "ctg": this.state['C.T.G nro'],
             "flete_corto": this.state['fleteCorto'],
-            "fecha_arribo": this.state['FechaArribo'],
+            "fecha_arribo": this.state['Fecha arribo'],
             "productor": productorSelecionado,
             "cee": this.state['CEE'],
             "fecha_vencimiento": this.state['Fecha vencimiento'],
-            "remitente_comercial": this.state['Remitente comercial'],
-            "intermediario": this.state['Intermediario'],
+            "remitente_comercial": remitenteComercialSeleccionado,
+            "intermediario": intermediarioSeleccionado,
 
-             //Pestaña granos
+
              "especie" : especieSeleccionada,
              "cosecha" : cosechaSeleccionada,
-             "calidad" : 'No se que va aca',
+             "calidad" : this.state['currentCalidad'],
              "procedencia" : procedenciaSeleccionada,
-             "kg_bruto" :'No se que va aca',
-             "kg_tara" : 'No se que va aca',
-             "kg_neto" : 'No se que va aca',
-             "porc_humedad" : 'No se que va aca',
-             "porc_zarandeo" : 'No se que va aca',
-             "porc_volatil" : 'No se que va aca',
-             "porc_calidad" : 'No se que va aca',
+             "kg_bruto" : 1000,
+             "kg_tara" : 35,
+             "kg_neto" : 965,
+             "porc_humedad" : 10,
+             "porc_zarandeo" : 5,
+             "porc_volatil" : 3,
+             "porc_calidad" : 4,
 
-             //Pestaña transporte
+
              "chofer" : choferSeleccionado,
              "transportista" : transportistaSeleccionado,
              "patente" : this.state['Patente'],
@@ -910,30 +970,32 @@ var IngresoDeCerealMainTabs = React.createClass ({
              "kms_recorridos" : this.state['Kms. recorridos'],
              "tarifa" : this.calculateTarifaTotal(),
 
-            //Pestaña destinatario
+
             "destinatario": destinatarioSeleccionado,
             "destino": destinoSeleccionado,
-            "observaciones": this.state['Observaciones']
+            "observaciones": this.state['Observaciones'],
+            "habilitado": true
         };
-       /* fetch(this.getRequest())
+
+        fetch(this.getRequest(bodyRequested))
             .then((response) => {
                 return response.json()
             })
             .then((response) => {
-                this.setState({
+                console.log('respuesta: ', response);
+                /*this.setState({
                     items: response.data
-                });
-            })*/
+                });*/
+            })
     },
 
-    getRequest: function () {
+    getRequest: function (bodyRequested) {
         var bodyJson = JSON.stringify(bodyRequested);
-
-        //'http://proyecto-final-prim.herokuapp.com/ingresoCereal/create'
-        var request = new Request('', {
+console.log('bodyRequested', bodyRequested);
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/ingresoCereal/create', {
             method: 'POST',
             headers: new Headers({
-                'Content-Type': 'text/plain'
+                'Content-Type': 'application/json'
             }),
             body: bodyJson
         });
@@ -1028,27 +1090,6 @@ var IngresoDeCerealMainTabs = React.createClass ({
                     })
                 });
             })
-    },
-    getAllCalidades: function () {
-        /*var request = new Request('http://proyecto-final-prim.herokuapp.com/calidades/getAll', {
-            method: 'GET',
-            headers: new Headers({
-                'Content-Type': 'text/plain'
-            })
-        });
-
-        fetch(request)
-            .then((response) => {
-                return response.json()
-            })
-            .then((response) => {
-                this.setState({
-                    allCalidadesEntities: response.data,
-                    calidadesDesc: response.data.map(function (calidad) {
-                        return calidad['descripcion']
-                    })
-                });
-            })*/
     },
     getAllProcedencias: function () {
         var request = new Request('http://proyecto-final-prim.herokuapp.com/campos/getAll', {

@@ -8,6 +8,7 @@ import Toggle from 'material-ui/Toggle';
 import SelectField from 'material-ui/SelectField';
 import MenuItem from 'material-ui/MenuItem';
 import DatePicker from 'material-ui/DatePicker';
+import Checkbox from 'material-ui/Checkbox';
 
 
 const styles = {
@@ -59,13 +60,13 @@ var AltaForm = React.createClass ({
             transportistasCod: [],
             localidadesDesc: [],
             productoresCuil: [],
+            rubrosDesc: [],
             especiesDesc: [],
             ivas: ['Régimen Simplificado', 'Responsable Inscripto', 'Exento', 'Consumidor Final'],
             estadoCamiones: ['Disponible', 'No disponible']
         }
 
     },
-    //componentWillMount()
     componentDidMount: function() {
         //FETCHES THE CORRESPONDIN VALUES FOR THE DROPDOWNS FIELDS
 
@@ -74,43 +75,24 @@ var AltaForm = React.createClass ({
             //CHOFER
             if (this.props.entity === 'chofer') {
                 this.getAllTransportistas();
-                //this.getAllLocalidades();
-                //this.getIvas(); no es necesario por que lo tengo desde el initial states
-
             }
-            //TRANSPORTISTA
-            if (this.props.entity === 'transportista') {
-                //this.getAllLocalidades();
-                //this.getIvas();
+            //ESPECIE
+            if (this.props.entity === 'especie') {
+                this.getAllRubros();
             }
             //PRODUCTOR
             if (this.props.entity === 'productor') {
-               // this.getAllLocalidades();
                 this.getAllTransportistas();
-                //this.getIvas();
             }
             //CAMPO
             if (this.props.entity === 'campo') {
-                //this.getAllLocalidades();
                 this.getAllProductores();
             }
             //MERMASHUMEDAD
             if (this.props.entity === 'mermasHumedad') {
                 this.getAllEspecies();
             }
-            //CAMION
-            if (this.props.entity === 'camion') {
-                //this.getEstadosCamiones(); igual que iva
-            }
-            //DESTINO
-            if (this.props.entity === 'destino') {
-                //this.getAllLocalidades();
-            }
-            //EMPRESA
-            if (this.props.entity === 'empresa') {
-                //this.getAllLocalidades();
-                //this.getIvas();
-            }
+
         }
 
         //BAJA
@@ -249,7 +231,37 @@ var AltaForm = React.createClass ({
             );
         }
 
+        if (item.type === 'checkbox-group') {
+            node = (
+                <div style={{paddingTop: '5px'}}>
+                    <p>Rubros: </p>
+                    {this.renderRubrosCheckBoxGroup()}
+                </div>
+                
+            );
+        }
+
         return node;
+    },
+    
+    renderRubrosCheckBoxGroup: function () {
+        var group = this.state.rubrosDesc.map(function (value, key) {
+                        return (
+                            <Checkbox
+                                ref={key}
+                                onCheck={this.rubroCheckboxSelect}
+                                label={value}
+                                style={styles.checkbox}
+                            />
+                        )
+                    });
+        
+        return group
+    },
+
+    rubroCheckboxSelect: function (event, checked) {
+        console.log('event: ', event);
+        console.log('checked: ', checked);
     },
 
     //SETS THE VALUES FOR THE CORRESPONDING DROPDOWNS
@@ -611,8 +623,8 @@ var AltaForm = React.createClass ({
                 });
             })
     },
-/*    getAllLocalidades: function () {
-        /!*var request = new Request('http://proyecto-final-prim.herokuapp.com/localidades/getAll', {
+    getAllRubros: function () {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/rubros/getAll', {
             method: 'GET',
             headers: new Headers({
                 'Content-Type': 'text/plain'
@@ -625,16 +637,13 @@ var AltaForm = React.createClass ({
             })
             .then((response) => {
                 this.setState({
-                    localidadesDesc: response.data.map(function (localidad) {
-                        return localidad['descripcion']
+                    allRubrosEntities: response.data,
+                    rubrosDesc: response.data.map(function (rubro) {
+                        return rubro['descripcion']
                     })
                 });
-            })*!/
-        this.setState({
-                localidadesDesc: ['Rosario', 'Funes', 'San Nicolas']
-        })
-
-    },*/
+            })
+    },
     getAllProductores: function () {
         var request = new Request('http://proyecto-final-prim.herokuapp.com/productores/getAll', {
             method: 'GET',
@@ -677,12 +686,6 @@ var AltaForm = React.createClass ({
                 });
             })
     },
-/*    getIvas: function () {
-        return this.state.ivas;
-    },*/
-/*    getEstadosCamiones: function () {
-        return this.state.estadosCamiones;
-    },*/
 
     //El metodo mas pedorro
     getEntidad: function () {
