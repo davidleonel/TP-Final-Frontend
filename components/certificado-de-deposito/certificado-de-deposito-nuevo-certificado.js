@@ -1,5 +1,6 @@
 import React from 'react';
 
+import {browserHistory} from 'react-router';
 import {Tabs, Tab} from 'material-ui/Tabs';
 import SwipeableViews from 'react-swipeable-views';
 import TextField from 'material-ui/TextField';
@@ -13,6 +14,9 @@ import Checkbox from 'material-ui/Checkbox';
 import {RadioButton, RadioButtonGroup} from 'material-ui/RadioButton';
 import {Table, TableBody, TableFooter, TableHeader, TableHeaderColumn, TableRow, TableRowColumn}
     from 'material-ui/Table';
+import Dialog from 'material-ui/Dialog';
+import FlatButton from 'material-ui/FlatButton';
+
 
 const styles = {
     headline: {
@@ -42,28 +46,31 @@ const styles = {
         width: '23%'
     },
     textField: {
-        display: 'inline-block',
-        verticalAlign: 'top'
+        display: 'block'
     },
     selectField: {
-        marginRight: '20px',
-        verticalAlign: 'top',
-        width: '30%'
+        float: 'right',
+        height:'40px',
+        width: '65%'
     },
-    textFieldMain: {
-        display: 'inline-block',
-        verticalAlign: 'top',
-        width: '60%'
+    selectFieldIcon: {
+        height:'18px',
+        padding: '0',
+        top: '-4px'
     },
-    selectFieldMain: {
-        marginRight: '20px',
-        verticalAlign: 'top',
-        width: '60%'
+    selectFieldLabel: {
+        top:'-25'
+    },
+    selectFieldMenu: {
+        height:'50%'
+    },
+    selectFieldHint: {
+        top:'7px'
     },
     datePicker: {
         verticalAlign: 'bottom',
         display: 'inline-block',
-        width: '30%'
+        width: '50%'
     }
 };
 
@@ -139,26 +146,88 @@ var CertificadoDeDepositoNuevo = React.createClass ({
 
             cps: [],
             selectedRowsArray: [],
-            KgsBrutosSeleccionadosTotales:0,
+            KgsBrutosSeleccionadosTotales: 0,
+
+            'detalle': [],
+            'Nro. de deposito': '',
+            'Nro. de carta de porte': '',
+            'gastosDesc': [
+                'Gastos generales 1116A',
+                'Secado',
+                'Zaranda',
+                'Acarreo',
+                'Fumigada',
+                'Gastos analisis',
+                'Costo carta de porte',
+                'Resolucion ONCCA 49-05'
+            ],
+            ['Gastos generales 1116A']: {
+                    descripcion: '',
+                    kilos: '',
+                    tarifa: '',
+                    importe: ''
+                },
+            ['Secado']: {
+                descripcion: '',
+                kilos: '',
+                tarifa: '',
+                importe: ''
+            },
+            ['Zaranda']: {
+                descripcion: '',
+                kilos: '',
+                tarifa: '',
+                importe: ''
+            },
+            ['Acarreo']: {
+                descripcion: '',
+                kilos: '',
+                tarifa: '',
+                importe: ''
+            },
+            ['Fumigada']: {
+                descripcion: '',
+                kilos: '',
+                tarifa: '',
+                importe: ''
+            },
+            ['Gastos analisis']: {
+                descripcion: '',
+                kilos: '',
+                tarifa: '',
+                importe: ''
+            },
+            ['Costo carta de porte']: {
+                descripcion: '',
+                kilos: '',
+                tarifa: '',
+                importe: ''
+            },
+            ['Resolucion ONCCA 49-05']: {
+                descripcion: '',
+                kilos: '',
+                tarifa: '',
+                importe: ''
+            },
+            ['IVA']: {
+                descripcion: '',
+                kilos: '',
+                tarifa: '',
+                importe: ''
+            },
+            ['Sellado']: {
+                descripcion: '',
+                kilos: '',
+                tarifa: '',
+                importe: ''
+            },
+
         }
 
-    },
-    componentDidUpdate: function (nextProps, nextState) {
-        if (this.state.selectedRowsArray != nextState.selectedRowsArray){
-            this.calculateKgsBrutosSeleccionados();
-        }
-
-        if (this.state.KgsBrutosSeleccionadosTotales != nextState.KgsBrutosSeleccionadosTotales){
-            this.calculateKgsBrutosSeleccionados();
-        }
     },
 
     componentDidMount: function() {
-        this.calculateKgsBrutosSeleccionados();
         this.getAllProductores();
-        this.getAllEspecies();
-        this.getAllRubros();
-        this.getAllCosechas();
         this.getAllChoferes();
 
         this.makeCPRequest();
@@ -168,7 +237,6 @@ var CertificadoDeDepositoNuevo = React.createClass ({
         });
 
     },
-
     handleControlledInputChange: function (event) {
         this.setState({
             [event.target.id]: event.target.value
@@ -182,11 +250,8 @@ var CertificadoDeDepositoNuevo = React.createClass ({
         if (label === 'Productor') {
             value = this.state.currentProductorCuil;
         }
-        if (label === 'Especie') {
-            value = this.state.currentEspecieDesc;
-        }
-        if (label === 'Cosecha') {
-            value = this.state.currentCosechaDesc;
+        if (label === 'Chofer') {
+            value = this.state.currentChoferCuil;
         }
 
         return value
@@ -198,14 +263,9 @@ var CertificadoDeDepositoNuevo = React.createClass ({
                 currentProductorCuil: payload
             });
         }
-        if (label === 'Especie') {
+        if (label === 'Chofer') {
             this.setState({
-                currentEspecieDesc: payload
-            });
-        }
-        if (label === 'Cosecha') {
-            this.setState({
-                currentCosechaDesc: payload
+                currentChoferCuil: payload
             });
         }
     },
@@ -217,13 +277,8 @@ var CertificadoDeDepositoNuevo = React.createClass ({
                 return <MenuItem value={value} key={key} primaryText={value}/>
             })
         }
-        if (label === 'Especie') {
-            values = this.state.especiesDesc.map(function (value, key) {
-                return <MenuItem value={value} key={key} primaryText={value}/>
-            })
-        }
-        if (label === 'Cosecha') {
-            values = this.state.cosechasDesc.map(function (value, key) {
+        if (label === 'Chofer') {
+            values = this.state.choferesCuil.map(function (value, key) {
                 return <MenuItem value={value} key={key} primaryText={value}/>
             })
         }
@@ -261,12 +316,25 @@ var CertificadoDeDepositoNuevo = React.createClass ({
 
     },
 
+    //MENEJO DE ERRORES
+    handleControlledInputBlur: function (event) {
+        if (event.target.value === '') {
+            this.setState({
+                [event.target.id + 'error']: 'Este campo es requerido.'
+            });
+        }  else {
+            this.setState({
+                [event.target.id + 'error']: false
+            });
+        }
+
+    },
 
 
     render() {
         return (
             <div style={{
-                    margin: '20px 0 70px 0',
+                    marginTop: '20px',
                     justifyContent: 'center',
                     alignItems:'center'
                     }}>
@@ -275,7 +343,7 @@ var CertificadoDeDepositoNuevo = React.createClass ({
                     value={this.state.slideIndex}
                     >
                     <Tab label="Cartas de Porte" value={0} />
-                    <Tab label="Detalle" value={1} />
+                    <Tab label="Detalle de gastos" value={1} />
                 </Tabs>
                 <SwipeableViews
                     index={this.state.slideIndex}
@@ -285,10 +353,14 @@ var CertificadoDeDepositoNuevo = React.createClass ({
                     <div>
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
-                                <div style={{display: 'inline-block', padding: '0', width:'100%'}}>
-                                    <div >
+                                <h1>Ingreso de un nuevo Certificado de depósito</h1>
+                                <p>Use los campos a continuación para filtrar la tabla de cartas de porte.</p>
+                                <div style={{display: 'inline-block', padding: '0', width:'60%'}}>
+                                    <div style={{ width:'80%'}} >
                                         <DatePicker
-                                            style={{display: 'inline-block', width: '25%'}}
+                                            floatingLabelText= 'Fecha desde'
+                                            style={{display: 'inline-block', width: '45%', marginRight:'5%'}}
+                                            textFieldStyle={{width: '100%'}}
                                             autoOk={true}
                                             DateTimeFormat={global.Intl.DateTimeFormat}
                                             cancelLabel='Cerrar'
@@ -298,7 +370,9 @@ var CertificadoDeDepositoNuevo = React.createClass ({
                                             onChange={this.updateFilterFields.bind(this, 'Fecha desde')}
                                             />
                                         <DatePicker
-                                            style={{display: 'inline-block', width: '25%'}}
+                                            floatingLabelText= 'Fecha hasta'
+                                            style={{display: 'inline-block', width: '45%', float: 'right'}}
+                                            textFieldStyle={{width: '100%'}}
                                             autoOk={true}
                                             cancelLabel='Cerrar'
                                             hintText='Fecha hasta'
@@ -308,30 +382,45 @@ var CertificadoDeDepositoNuevo = React.createClass ({
                                             />
                                     </div>
                                     <br/>
-                                    <SelectField
-                                        style={styles.selectField}
-                                        floatingLabelText='Chofer'
-                                        maxHeight={200}
-                                        ref='Chofer'
-                                        value={this.getControlledSelectFieldValue('Chofer')}
-                                        onChange={this.handleControlledSelectFieldValueChange.bind(this,'Chofer')}
-                                        >
-                                        {this.renderSelectFieldsValues('Chofer')}
-                                    </SelectField>
+                                    <div>
+                                        <SelectField
+                                            labelStyle={styles.selectFieldLabel}
+                                            iconStyle={styles.selectFieldIcon}
+                                            style={{height:'40px', width: '80%', float:'left'}}
+                                            menuStyle={styles.selectFieldMenu}
+                                            floatingLabelStyle={styles.selectFieldHint}
+                                            floatingLabelText='Chofer'
+                                            maxHeight={200}
+                                            ref='Chofer'
+                                            value={this.getControlledSelectFieldValue('Chofer')}
+                                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Chofer')}
+                                            >
+                                            {this.renderSelectFieldsValues('Chofer')}
+                                        </SelectField>
+                                    </div>
                                     <br/>
-                                    <SelectField
-                                        style={styles.selectField}
-                                        floatingLabelText='Productor'
-                                        maxHeight={200}
-                                        ref='Productor'
-                                        value={this.getControlledSelectFieldValue('Productor')}
-                                        onChange={this.handleControlledSelectFieldValueChange.bind(this,'Productor')}
-                                        >
-                                        {this.renderSelectFieldsValues('Productor')}
-                                    </SelectField>
                                     <br/>
+                                    <br/>
+                                    <div>
+                                        <SelectField
+                                            labelStyle={styles.selectFieldLabel}
+                                            iconStyle={styles.selectFieldIcon}
+                                            style={{height:'40px', width: '80%', marginRight:'10%'}}
+                                            menuStyle={styles.selectFieldMenu}
+                                            floatingLabelStyle={styles.selectFieldHint}
+                                            floatingLabelText='Productor'
+                                            maxHeight={200}
+                                            ref='Productor'
+                                            value={this.getControlledSelectFieldValue('Productor')}
+                                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Productor')}
+                                            >
+                                            {this.renderSelectFieldsValues('Productor')}
+                                        </SelectField>
+                                    </div>
                                     <TextField
-                                        style={{height:'60px'}}
+                                        errorText={this.state['Carta de porte' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
+                                        style={styles.textField}
                                         floatingLabelStyle={{lineHeight:'10px'}}
                                         hintStyle={{bottom:'7px'}}
                                         hintText='Carta de porte'
@@ -342,26 +431,74 @@ var CertificadoDeDepositoNuevo = React.createClass ({
                                         onChange={this.handleControlledInputChange}
                                         />
                                 </div>
-                                <br/>
-                                <br/>
-                                <br/>
+
+
+                                <div style={{
+                                    border: 'solid black 1px',
+                                    float: 'right',
+                                    height: '190px',
+                                    width: '300px',
+                                    paddingLeft: '10px',
+                                    marginRight: '30px',
+                                    marginTop: '30px'}}
+                                    >
+                                    <h3 style={{marginBottom: '0px'}} >Detalles del Certificado a crear</h3>
+                                    <TextField
+                                        errorText={this.state['Nro. de Certificado de deposito' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
+                                        style={{height:'60px', width:'285px', color: 'black'}}
+                                        floatingLabelStyle={{lineHeight:'10px', color: 'black'}}
+                                        hintStyle={{bottom:'7px'}}
+                                        underlineStyle={{width:'100%'}}
+                                        hintText='Nro. de Certificado de depósito'
+                                        floatingLabelText='Nro. de Certificado de depósito'
+                                        id='Nro. de Certificado de deposito'
+                                        ref='Nro. de Certificado de deposito'
+                                        value= {this.state['Nro. de Certificado de deposito']}
+                                        onChange={this.handleControlledInputChange}
+                                        />
+                                    <TextField
+                                        disabled={true}
+                                        style={{cursor: 'default', height:'60px', width:'285px', color: 'black'}}
+                                        floatingLabelStyle={{lineHeight:'10px', color: 'black'}}
+                                        hintStyle={{bottom:'7px'}}
+                                        underlineStyle={{width:'100%'}}
+                                        hintText='Nro. de carta de porte'
+                                        floatingLabelText='Nro. de carta de porte'
+                                        id='Nro. de carta de porte'
+                                        ref='Nro. de carta de porte'
+                                        value= {this.state['Nro. de carta de porte']}
+                                        onChange={this.handleControlledInputChange}
+                                        />
+
+                                </div>
                                 <br/>
                                 <br/>
                                 <div>
                                     <Table
-                                        height={this.state.height}
+                                        height={'319px'}
                                         fixedHeader= {true}
                                         fixedFooter= {true}
                                         selectable={true}
-                                        multiSelectable={true}
+                                        multiSelectable= {false}
                                         onRowSelection={this.handleRowSelection}
-
                                         >
                                         <TableHeader
-                                            displaySelectAll={true}
+                                            displaySelectAll= {false}
                                             adjustForCheckbox={true}
-                                            enableSelectAll={true}
+                                            enableSelectAll= {false}
                                             >
+                                            <TableRow>
+                                                <TableHeaderColumn colSpan="8" tooltip="Seleccione la carta de porte correspondiente al Certificado de depósito." style={{textAlign: 'right'}}>
+                                                    Seleccione la carta de porte correspondiente al Certificado de depósito.
+                                                    <RaisedButton
+                                                        style={{margin:'10px'}}
+                                                        backgroundColor="#8BC34A"
+                                                        label="Agregar gastos"
+                                                        onTouchTap={this.handleAgregarGastos}
+                                                        />
+                                                </TableHeaderColumn>
+                                            </TableRow>
                                             <TableRow>
                                                 <TableHeaderColumn tooltip="Carta de Porte">Carta de Porte</TableHeaderColumn>
                                                 <TableHeaderColumn tooltip="Fecha Emision">Fecha Emision</TableHeaderColumn>
@@ -384,249 +521,413 @@ var CertificadoDeDepositoNuevo = React.createClass ({
                                         <TableFooter
                                             adjustForCheckbox={this.state.showCheckboxes}
                                             >
-                                            <TableRow>
-                                                <TableRowColumn colSpan="1" style={{textAlign: 'center'}}>
-                                                    <TextField
-                                                        disabled={true}
-                                                        style={{display: 'inline-block', verticalAlign: 'top', width: '90%'}}
-                                                        floatingLabelText= 'KGs Brutos Totales'
-                                                        id='KgsBrutosSeleccionadosTotales'
-                                                        ref='KgsBrutosSeleccionadosTotales'
-                                                        value= {this.state['KgsBrutosSeleccionadosTotales']}
-                                                        />
-                                                </TableRowColumn>
-                                            </TableRow>
                                         </TableFooter>
                                     </Table>
                                 </div>
-
-
-                                <RaisedButton
-                                    style={{margin:'10px'}}
-                                    backgroundColor="#8BC34A"
-                                    label="Aceptar"
-                                    onTouchTap={this.handleAceptar}
-                                    />
                             </Paper>
                         </div>
                     </div>
 
                     <div>
+                        <div>
+                            <Paper zDepth={3} style={{padding: '20px'}}>
+                                <h1>Detalles de los gastos correspondientes a la carta de porte seleccionada</h1>
+                                <p>Listado de todos los gastos correspondientes con a la carta de porte seleccionada:</p>
+                                <div style={{marginTop: '-27px'}}>
+                                    <Table
+                                        height={'620px'}
+                                        fixedHeader= {true}
+                                        fixedFooter= {true}
+                                        selectable= {false}
+                                        multiSelectable= {false}
+                                        >
+                                        <TableHeader
+                                            displaySelectAll= {false}
+                                            adjustForCheckbox= {false}
+                                            enableSelectAll= {false}
+                                            >
+                                            <TableRow>
+                                                <TableHeaderColumn colSpan="4" tooltip="Al seleccionar los gastos, se calcularán los kilos, tarifas e importes." style={{textAlign: 'right'}}>
+                                                    Al seleccionar los gastos, se calcularán los kilos, tarifas e importes.
+                                                    <RaisedButton
+                                                        style={{margin:'10px'}}
+                                                        backgroundColor="#8BC34A"
+                                                        label="Aceptar"
+                                                        onTouchTap={this.handleAceptar}
+                                                        />
+                                                </TableHeaderColumn>
+                                            </TableRow>
+                                            <TableRow>
+                                                <TableHeaderColumn tooltip="Descripción">Descripción</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Kilos">Kilos</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Tarifa">Tarifa</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Importe">Importe</TableHeaderColumn>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody
+                                            displayRowCheckbox= {false}
+                                            showRowHover= {true}
+                                            stripedRows= {false}
+                                            >
+                                            {this.renderGastosRows()}
+                                        </TableBody>
+                                        <TableFooter
+                                            adjustForCheckbox={false}
+                                            >
+                                        </TableFooter>
+                                    </Table>
+                                </div>
 
+                                <Dialog
+                                    title={"Se está por ingresar un nuevo certificado de depósito a la base de datos"}
+                                    actions={[
+                                                <FlatButton
+                                                    label="Cancelar"
+                                                    primary={true}
+                                                    onTouchTap={this.handleCloseAltaConfirmationModal}
+                                                />,
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleAltaConfirmationModal}
+                                                />
+                                            ]}
+                                    modal={false}
+                                    open={this.state.altaConfirmationModal}
+                                >
+                                    {"¿Está seguro de que los datos correspondientes al nuevo certificado son correctos?"}
+                                </Dialog>
+                                <Dialog
+                                    title={"El certificado correspondiente a la CP Nro: " + this.state['Nro. de carta de porte'] + " fue ingresado a la base de datos con éxito"}
+                                    actions={[
+                                                <a target="_blank" href={'http://proyecto-final-prim.herokuapp.com/certificadosDeposito/pdf/' + this.state.newCertificadoId}>
+                                                    <FlatButton
+                                                        label="Ver PDF"
+                                                        primary={true}
+                                                        disabled={false}
+                                                    />
+                                                </a>,
+                                                <FlatButton
+                                                    label="OK"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseAltaCertificadoModal}
+                                                />
+                                            ]}
+                                    modal={false}
+                                    open={this.state.altaCertificadoModal}
+                                >
+                                    {'Para ver el pdf correspondiente al nuevo certificado seleccione la opción "Ver PDF".\n Al seleccionar "OK", será redireccionado a la página de inicio de certificado de depósito.'}
+                                </Dialog>
+
+
+
+
+                            </Paper>
+                        </div>
                     </div>
+                    <Dialog
+                        title={"Faltan campos por completar!!"}
+                        actions={[
 
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseFieldsMissingModal}
+                                                />
+                                            ]}
+                        modal={false}
+                        open={this.state.fieldsMissingModal}
+                    >
+                        {"Por favor complete los campos faltantes para continuar."}
+                    </Dialog>
                 </SwipeableViews>
             </div>
         )
     },
+    handleOpenFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: true});
+    },
+    handleCloseFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: false});
+    },
 
-    handleRowSelection: function (selectedRows) {
-        var cpsLength = this.state.cps.length;
-        var selectedRowsLength = selectedRows ? selectedRows.length : 0;
-        var object = {};
 
-        for (var i = 0; i < cpsLength; i++) {
-            for (var j = 0; j < selectedRowsLength; j++) {
-                if (i === selectedRows[j]) {
-                    object[i]=true
-                }
-            }
+    handleAceptar: function () {
+
+        if (this.state['Nro. de carta de porte'] === '' || this.state['Nro. de Certificado de deposito'] === '') {
+            this.handleOpenFieldsMissingModal();
+        } else {
+            this.handleOpenAltaConfirmationModal();
         }
 
-        this.setState({
-            selectedRowsArray: selectedRows,
-            currentSelectedRows: object
-        });
-        this.forceUpdate();
-        this.calculateKgsBrutosSeleccionados();
+        //this.handleOpenAltaConfirmationModal();
     },
-
-    calculateKgsBrutosSeleccionados: function () {
-        var KgsBrutosSeleccionadosTotales = 0;
-        var selectedRowsArrayLength = this.state.selectedRowsArray ? this.state.selectedRowsArray.length : 0;
-
-        for (var i = 0; i < selectedRowsArrayLength; i++) {
-            var cp = this.state.cps[this.state.selectedRowsArray[i]];
-
-            KgsBrutosSeleccionadosTotales = KgsBrutosSeleccionadosTotales + cp['kg_bruto'];
-        }
-
-        this.setState({
-            KgsBrutosSeleccionadosTotales: KgsBrutosSeleccionadosTotales
-        });
+    handleOpenAltaConfirmationModal: function (event) {
+        this.setState({altaConfirmationModal: true});
 
     },
-
-    handleChange: function (value) {
-        this.setState({
-            slideIndex: value
-        });
+    handleCloseAltaConfirmationModal: function () {
+        this.setState({altaConfirmationModal: false});
     },
 
-    renderRows: function () {
-        var items = this.state.allEspeciesEntities;
-        var currentEspecie = this.state.currentEspecieDesc;
-        var especie = [];
-        if (items) {
-            especie = _.find(items, function (e) {
-                if (e['descripcion'] === currentEspecie) {
-                    return true
-                }
-            });
-
-            if (especie && especie.rubros) {
-                return (especie.rubros.map(this.renderRow))
-            }
-        }
-
+    handleAltaConfirmationModal: function () {
+        this.makeAceptarRequest();
+        this.handleCloseAltaConfirmationModal();
+        this.setState({altaCertificadoModal: true});
     },
-    renderRow: function (row, index) {
-        var rubro = _.find(this.state.allRubrosEntities, function (r) {
-            if (r['_id'] === row['rubro']) {
-                return true
-            }
-        });
-
-        return(
-            <TableRow key={index} selected={row.selected} >
-                <TableRowColumn>{rubro['descripcion']}</TableRowColumn>
-                <TableRowColumn>
-                    <TextField
-                        style={styles.textField}
-                        id={'Porcentaje' + index}
-                        ref='Porcentaje'
-                        value= {this.state['Porcentaje' + index]}
-                        onChange={this.handleControlledInputChange}
-                        onBlur={this.calculateBonificacion.bind(this, index, row['rubro'])}
-                        />
-                </TableRowColumn>
-                <TableRowColumn>
-                    <TextField
-                        disabled={true}
-                        style={styles.textField}
-                        id={'Bonificacion' + index}
-                        ref='Bonificacion'
-                        value= {this.state['Bonificacion' + index]}
-                        onChange={this.handleControlledInputChange}
-                        onBlur={this.calculateBonificacion.bind(this, index, row['rubro'])}
-                        />
-                </TableRowColumn>
-            </TableRow>
-        )
+    handleCloseAltaCertificadoModal: function () {
+        this.setState({altaCertificadoModal: false});
+        browserHistory.push('certificadoDeDeposito');
     },
-    calculateBonificacion: function (index, rubroID, event) {
-        var currentEspecie = this.state.currentEspecieDesc;
-        var especieSeleccionada = '';
-        this.state.allEspeciesEntities.forEach(function (especie) {
-            if (especie['descripcion'] === currentEspecie) {
-                especieSeleccionada = especie['_id'];
-            }
+
+    makeAceptarRequest: function () {
+        var bodyRequested = {
+            "gastos":[
+                this.state['Gastos generales 1116A'],
+                this.state['Secado'],
+                this.state['Zaranda'],
+                this.state['Acarreo'],
+                this.state['Fumigada'],
+                this.state['Gastos analisis'],
+                this.state['Costo carta de porte'],
+                this.state['Resolucion ONCCA 49-05'],
+                this.state['IVA'],
+                this.state['Sellado']
+            ],
+            "habilitado": true,
+            "numero": this.state['Nro. de Certificado de deposito'],
+            "ingreso": this.state['idCPSeleccionada']
+
+        };
+        var bodyJson = JSON.stringify(bodyRequested);
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/update/' + this.state['certificadoID'] , {
+            method: 'Put',
+            headers: new Headers({
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }),
+            body: bodyJson
         });
-
-        var especieID = especieSeleccionada;
-        var porcRubro = event.target.value;
-        var bonificacionReset = this.state.bonificacionReset;
-
-        var request = new Request(
-            'http://proyecto-final-prim.herokuapp.com/analisis/agregarRubro/' +
-            rubroID + '/' +
-            especieID + '/' +
-            porcRubro + '/' +
-            bonificacionReset
-            , {
-                method: 'GET',
-                headers: new Headers({
-                    'Content-Type': 'application/json'
-                })
-            });
 
         fetch(request)
             .then((response) => {
                 return response.json()
             })
             .then((response) => {
-                console.log('respuesta: ', response);
                 this.setState({
-                    bonificacionReset:  false,
-                    Grado: response.data['grado'],
-                    Factor: response.data['factor'],
-                    ['Bonificacion' + index]: response.data['bonreb']
+                    'newCertificadoId': response.data['_id']
                 });
             })
-
     },
 
-    handleAceptar: function () {
-        this.makeAceptarRequest();
+    round: function (value, exp) {
+        if (typeof exp === 'undefined' || +exp === 0)
+            return Math.round(value);
+
+        value = +value;
+        exp = +exp;
+
+        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0))
+            return NaN;
+
+        // Shift
+        value = value.toString().split('e');
+        value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
+
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
     },
-    makeAceptarRequest: function () {
-        var state = this.state;
-        var currentProductorCuil = state.currentProductorCuil;
-        var currentEspecie = state.currentEspecieDesc;
-        var currentCosecha = state.currentCosechaDesc;
-        var productorSelecionado = '';
-        var especieSeleccionada = '';
-        var cosechaSeleccionada = '';
-        var rubrosSeleccionados = [];
-        var cpsSeleccionadas = [];
 
-        this.state.allProductoresEntities.forEach(function (productor) {
-            if (productor['cuil'] === currentProductorCuil) {
-                productorSelecionado = productor['_id'];
-            }
-        });
-        this.state.allEspeciesEntities.forEach(function (especie) {
-            if (especie['descripcion'] === currentEspecie) {
+    renderGastosRows: function () {
+        var rows = this.state.gastosDesc.map(this.renderGastosRow);
 
-                especie.rubros.forEach(function (rubro, index) {
-                    rubrosSeleccionados.push({"rubro": rubro['rubro'], "porcentaje": state['Porcentaje' + index]});
-                });
+       // rows.push(this.renderIvaRow());
+       // rows.push(this.renderSelladoRow());
+        rows.push(this.renderTotalRow());
 
-                especieSeleccionada = especie['_id'];
-            }
-        });
-        this.state.allCosechasEntities.forEach(function (cosecha) {
-            if (cosecha['descripcion'] === currentCosecha) {
-                cosechaSeleccionada = cosecha['_id'];
-            }
-        });
+        return rows;
+    },
+    renderGastosRow: function (detalle, index) {
 
-        for (var i = 0; i < this.state.selectedRowsArray.length; i++) {
-            var cp = this.state.cps[this.state.selectedRowsArray[i]];
-
-            cpsSeleccionadas.push(cp['_id']);
+        if (detalle) {
+            return(
+                <TableRow key={index} >
+                    <TableRowColumn>
+                        {this.state[detalle].descripcion}
+                    </TableRowColumn>
+                    <TableRowColumn>
+                        {this.state[detalle].kilos}
+                    </TableRowColumn>
+                    <TableRowColumn>
+                        {this.state[detalle].tarifa}
+                    </TableRowColumn>
+                    <TableRowColumn>
+                        {this.round(this.state[detalle].importe, 2)}
+                    </TableRowColumn>
+                </TableRow>
+            )
         }
-
-        var bodyRequested = {
-            "nro_analisis" : this.state['nroAnalisis'],
-            "productor" : productorSelecionado,
-            "especie" : especieSeleccionada,
-            "cosecha" : cosechaSeleccionada,
-            "fecha_analisis" : this.state['Fecha analisis'],
-            "costo_analisis": state['Costo'],
-            "habilitado": true,
-            "ingresos" : cpsSeleccionadas,
-            "rubros" : rubrosSeleccionados
-        };
-
-        console.log('bodyRequested: ', bodyRequested);
-        console.log('bodyRequested: ', bodyRequested);
-        console.log('bodyRequested: ', bodyRequested);
-
-        /*fetch(this.getRequest(bodyRequested))
-         .then((response) => {
-         return response.json()
-         })
-         .then((response) => {
-         console.log('respuesta: ', response);
-         /!*this.setState({
-         items: response.data
-         });*!/
-         })*/
     },
-    getRequest: function (bodyRequested) {
+    renderIvaRow: function () {
+
+        return(
+            <TableRow  >
+                <TableRowColumn>
+                    {this.state['IVA'].descripcion}
+                </TableRowColumn>
+                <TableRowColumn>
+                    {this.state['IVA'].kilos}
+                </TableRowColumn>
+                <TableRowColumn>
+                    {this.state['IVA'].tarifa}
+                </TableRowColumn>
+                <TableRowColumn>
+                    {this.round(this.state['IVA'].importe, 2)}
+                </TableRowColumn>
+            </TableRow>
+        )
+    },
+    renderSelladoRow: function () {
+
+        return(
+            <TableRow  >
+                <TableRowColumn>
+                    {this.state['Sellado'].descripcion}
+                </TableRowColumn>
+                <TableRowColumn>
+                    {this.state['Sellado'].kilos}
+                </TableRowColumn>
+                <TableRowColumn>
+                    {this.state['Sellado'].tarifa}
+                </TableRowColumn>
+                <TableRowColumn>
+                    {this.round(this.state['Sellado'].importe, 2)}
+                </TableRowColumn>
+            </TableRow>
+        )
+    },
+    renderTotalRow: function () {
+
+        return(
+            <TableRow  >
+                <TableRowColumn>
+                    <span style={{fontWeight: '900'}}>Total:</span>
+                </TableRowColumn>
+                <TableRowColumn>
+                    <span></span>
+                </TableRowColumn>
+                <TableRowColumn>
+                    <span></span>
+                </TableRowColumn>
+                <TableRowColumn>
+                    <span style={{fontWeight: '900'}}>{this.round(this.calculateTotal(), 2)}</span>
+                </TableRowColumn>
+            </TableRow>
+        )
+    },
+
+    handleRowSelection: function (selectedRows) {
+        var index = selectedRows[0];
+
+        this.setState({
+            'Nro. de carta de porte': this.state.cps[index]['nro_cp'],
+            'idCPSeleccionada': this.state.cps[index]['_id'],
+        });
+
+    },
+    handleChange: function (value) {
+        this.setState({
+            slideIndex: value
+        });
+    },
+
+    calculateTotal: function () {
+        var total =
+            this.state['Gastos generales 1116A'].importe +
+            this.state['Secado'].importe +
+            this.state['Zaranda'].importe +
+            this.state['Acarreo'].importe +
+            this.state['Fumigada'].importe +
+            this.state['Gastos analisis'].importe +
+            this.state['Costo carta de porte'].importe +
+            this.state['Resolucion ONCCA 49-05'].importe;
+        return total;
+    },
+
+    handleAgregarGastos: function () {
+        var request;
+        var selladoRequest;
+        var ivaRequest;
+
+        this.makeAgregarCertificadoRequest();
+        this.handleChange(1);
+
+        this.state.gastosDesc.forEach(function (gastoDesc) {
+            request = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/gastos/' +
+                this.state.idCPSeleccionada + '/' + gastoDesc, {
+                method: 'GET',
+                headers: new Headers({
+                    'Content-Type': 'text/plain'
+                })
+            });
+
+            fetch(request)
+                .then((response) => {
+                    return response.json()
+                })
+                .then((response) => {
+                    this.setState({
+                        [gastoDesc]: response.data
+                    });
+                });
+        }.bind(this));
+
+        ivaRequest = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/gastos/' +
+            this.state.idCPSeleccionada + '/IVA?subtotal=' + this.calculateTotal(), {
+            method: 'GET',
+            headers: new Headers({
+                'Content-Type': 'text/plain'
+            })
+        });
+        fetch(ivaRequest)
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                this.setState({
+                    ['IVA']: response.data
+                });
+            });
+        selladoRequest = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/gastos/' +
+            this.state.idCPSeleccionada + '/Sellado?subtotal=' + this.calculateTotal(), {
+            method: 'GET',
+            headers: new Headers({
+                'Content-Type': 'text/plain'
+            })
+        });
+        fetch(selladoRequest)
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                this.setState({
+                    ['Sellado']: response.data
+                });
+            });
+    },
+
+    makeAgregarCertificadoRequest: function () {
+        var bodyRequested = {
+            "numero" : this.state['Nro. de Certificado de deposito'],
+            "ingreso" : this.state.idCPSeleccionada,
+            "habilitado" : true
+        };
         var bodyJson = JSON.stringify(bodyRequested);
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/analisis/create', {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/create', {
             method: 'POST',
             headers: new Headers({
                 'Content-Type': 'application/json'
@@ -634,7 +935,16 @@ var CertificadoDeDepositoNuevo = React.createClass ({
             body: bodyJson
         });
 
-        return request
+
+        fetch(request)
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                this.setState({
+                    ['certificadoID']: response.data['_id']
+                });
+            });
     },
 
 
@@ -660,8 +970,8 @@ var CertificadoDeDepositoNuevo = React.createClass ({
 
             })
     },
-    getAllEspecies: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/especies/getAll', {
+    getAllChoferes: function () {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/choferes/getAll', {
             method: 'GET',
             headers: new Headers({
                 'Content-Type': 'text/plain'
@@ -674,51 +984,9 @@ var CertificadoDeDepositoNuevo = React.createClass ({
             })
             .then((response) => {
                 this.setState({
-                    allEspeciesEntities: response.data,
-                    especiesDesc: response.data.map(function (especie) {
-                        return especie['descripcion']
-                    })
-                });
-            })
-    },
-    getAllRubros: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/rubros/getAll', {
-            method: 'GET',
-            headers: new Headers({
-                'Content-Type': 'text/plain'
-            })
-        });
-
-        fetch(request)
-            .then((response) => {
-                return response.json()
-            })
-            .then((response) => {
-                this.setState({
-                    allRubrosEntities: response.data,
-                    rubrosDesc: response.data.map(function (rubro) {
-                        return rubro['descripcion']
-                    })
-                });
-            })
-    },
-    getAllCosechas: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/cosechas/getAll', {
-            method: 'GET',
-            headers: new Headers({
-                'Content-Type': 'text/plain'
-            })
-        });
-
-        fetch(request)
-            .then((response) => {
-                return response.json()
-            })
-            .then((response) => {
-                this.setState({
-                    allCosechasEntities: response.data,
-                    cosechasDesc: response.data.map(function (cosecha) {
-                        return cosecha['descripcion']
+                    allChoferesEntities: response.data,
+                    choferesCuil: response.data.map(function (chofer) {
+                        return chofer['cuil']
                     })
                 });
             })
@@ -811,7 +1079,6 @@ var CertificadoDeDepositoNuevo = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                console.log('response', response);
                 this.setState({
                     cps: response.data
                 });
@@ -860,27 +1127,7 @@ var CertificadoDeDepositoNuevo = React.createClass ({
         return section
     },
 
-    getAllChoferes: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/choferes/getAll', {
-            method: 'GET',
-            headers: new Headers({
-                'Content-Type': 'text/plain'
-            })
-        });
 
-        fetch(request)
-            .then((response) => {
-                return response.json()
-            })
-            .then((response) => {
-                this.setState({
-                    allChoferesEntities: response.data,
-                    choferesCuil: response.data.map(function (chofer) {
-                        return chofer['cuil']
-                    })
-                });
-            })
-    },
 
 });
 

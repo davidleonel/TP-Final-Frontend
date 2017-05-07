@@ -1,5 +1,6 @@
 import React from 'react';
 
+import {browserHistory} from 'react-router';
 import {Tabs, Tab} from 'material-ui/Tabs';
 import SwipeableViews from 'react-swipeable-views';
 import TextField from 'material-ui/TextField';
@@ -13,6 +14,8 @@ import Checkbox from 'material-ui/Checkbox';
 import {RadioButton, RadioButtonGroup} from 'material-ui/RadioButton';
 import {Table, TableBody, TableFooter, TableHeader, TableHeaderColumn, TableRow, TableRowColumn}
     from 'material-ui/Table';
+import Dialog from 'material-ui/Dialog';
+import FlatButton from 'material-ui/FlatButton';
 
 const styles = {
     headline: {
@@ -77,7 +80,7 @@ const styles = {
     datePicker: {
         verticalAlign: 'bottom',
         display: 'inline-block',
-        width: '30%'
+        width: '27%'
     }
 };
 
@@ -109,6 +112,8 @@ var AnalisisNuevoAnalisis = React.createClass ({
             tarifasDesc:[],
             destinosDesc:[],
             calidades: ['Conforme', 'Condicional'],
+
+            allEspeciesEntities: [],
 
 
             allRubrosEntities: [],
@@ -150,22 +155,12 @@ var AnalisisNuevoAnalisis = React.createClass ({
             bonificacionReset: true,
             Grado: 0,
             Factor: 0,
+
+            selectedRowsArray: [],
+            fieldsMissingModal: false
         }
 
     },
-   /* componentDidUpdate: function (nextProps, nextState) {
-        if (this.state.cps != nextState.cps){
-            this.handleRowSelection();
-        }
-
-        if (this.state.selectedRowsArray != nextState.selectedRowsArray){
-            this.handleRowSelection();
-        }
-
-        if (this.state.currentSelectedRows != nextState.currentSelectedRows){
-            this.handleRowSelection();
-        }
-    },*/
     componentDidMount: function() {
         this.getAllProductores();
         this.getAllEspecies();
@@ -273,12 +268,44 @@ var AnalisisNuevoAnalisis = React.createClass ({
 
     },
 
+    //MENEJO DE ERRORES
+    handleControlledInputBlur: function (event) {
+        if (event.target.value === '') {
+            this.setState({
+                [event.target.id + 'error']: 'Este campo es requerido.'
+            });
+        } else {
+            this.setState({
+                [event.target.id + 'error']: false
+            });
+        }
+
+    },
+
+    round: function (value, exp) {
+        if (typeof exp === 'undefined' || +exp === 0)
+            return Math.round(value);
+
+        value = +value;
+        exp = +exp;
+
+        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0))
+            return NaN;
+
+        // Shift
+        value = value.toString().split('e');
+        value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
+
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
+    },
 
 
     render() {
         return (
             <div style={{
-                    margin: '20px 0 70px 0',
+                    marginTop: '20px',
                     justifyContent: 'center',
                     alignItems:'center'
                     }}>
@@ -286,7 +313,7 @@ var AnalisisNuevoAnalisis = React.createClass ({
                     onChange={this.handleChange}
                     value={this.state.slideIndex}
                     >
-                    <Tab label="Analisis" value={0} />
+                    <Tab label="Análisis" value={0} />
                     <Tab label="Cartas de Porte" value={1} />
                 </Tabs>
                 <SwipeableViews
@@ -296,11 +323,16 @@ var AnalisisNuevoAnalisis = React.createClass ({
                     <div>
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
+                                <h1>Ingreso de datos del análisis</h1>
+                                <p>Ingrese los datos correspondientes al análisis.
+                                    Luego, ingrese el porcentaje para cada rubro de la especie seleccionada para calcular la bonificación/rebaja.    </p>
                                 <div style={{display: 'inline-block', padding: '0 0 10px 10px', width:'100%'}}>
                                     <TextField
+                                        errorText={this.state['nroAnalisis' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
                                         style={{display: 'inline-block', verticalAlign: 'top', width: '30%', marginRight:'25px'}}
-                                        hintText= 'Nro. de analisis'
-                                        floatingLabelText= 'Nro. de analisis'
+                                        hintText= 'Nro. de análisis'
+                                        floatingLabelText= 'Nro. de análisis'
                                         id='nroAnalisis'
                                         ref='nroAnalisis'
                                         value= {this.state['nroAnalisis']}
@@ -342,10 +374,18 @@ var AnalisisNuevoAnalisis = React.createClass ({
                                     </div>
 
                                 </div>
-                                <div style={{display: 'inline-block', padding: '0 0 10px 10px', width:'60%', display:'inline-block'}}>
-                                    <DatePicker style={styles.datePicker} hintText='Fecha analisis' mode="landscape" ref='Fecha analisis' onChange={this.formatDate.bind(this, 'Fecha analisis')}  />
-                                    <br/>
+                                <div style={{padding: '0 0 10px 10px', width:'60%', display:'inline-block'}}>
+                                    <DatePicker
+                                        style={styles.datePicker}
+                                        hintText='Fecha análisis'
+                                        mode="landscape"
+                                        ref='Fecha análisis'
+                                        onChange={this.formatDate.bind(this, 'Fecha analisis')}
+                                        floatingLabelText= 'Fecha análisis'
+                                        />
                                     <TextField
+                                        errorText={this.state['Costo' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
                                         style={{display: 'inline-block', verticalAlign: 'top', width: '256px'}}
                                         hintText= 'Costo'
                                         floatingLabelText= 'Costo'
@@ -357,7 +397,7 @@ var AnalisisNuevoAnalisis = React.createClass ({
                                 </div>
 
 
-                                <div style={{paddingLeft:'15px', width:'200px', border: 'solid black 1px', display:'inline-block', marginLeft:'20%', marginTop:'-14px'}}>
+                                <div style={{paddingLeft:'15px', width:'200px', border: 'solid black 1px', display:'inline-block', marginLeft:'20%', marginTop:'-80px'}}>
                                     <TextField
                                         floatingLabelFixed
                                         disabled={true}
@@ -365,7 +405,7 @@ var AnalisisNuevoAnalisis = React.createClass ({
                                         floatingLabelText= 'Factor'
                                         id='Factor'
                                         ref='Factor'
-                                        value= {this.state['Factor']}
+                                        value= {this.round(this.state['Factor'], 2 )}
                                         onChange={this.handleControlledInputChange}
                                     />
                                     <br/>
@@ -376,14 +416,13 @@ var AnalisisNuevoAnalisis = React.createClass ({
                                         floatingLabelText= 'Grado'
                                         id='Grado'
                                         ref='Grado'
-                                        value= {this.state['Grado']}
+                                        value= {this.round(this.state['Grado'], 2 )}
                                         onChange={this.handleControlledInputChange}
                                     />
                                 </div>
-                                <br/>
                                 <div>
                                     <Table
-                                        height={this.state.height}
+                                        height={'195px'}
                                         fixedHeader={this.state.fixedHeader}
                                         fixedFooter={this.state.fixedFooter}
                                         selectable={false}
@@ -400,9 +439,9 @@ var AnalisisNuevoAnalisis = React.createClass ({
                                                 </TableHeaderColumn>
                                             </TableRow>
                                             <TableRow>
-                                                <TableHeaderColumn tooltip="Rubro de Analisis">Rubro de Analisis</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Rubro de Análisis">Rubro de Análisis</TableHeaderColumn>
                                                 <TableHeaderColumn tooltip="Porcentaje">Porcentaje</TableHeaderColumn>
-                                                <TableHeaderColumn tooltip="Bonificacion / Rebaja">Bonificacion / Rebaja</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="% Bonificación / Rebaja">% Bonificación / Rebaja </TableHeaderColumn>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody
@@ -430,10 +469,13 @@ var AnalisisNuevoAnalisis = React.createClass ({
 
                     <div>
                         <div>
-                            <Paper zDepth={3} style={{padding: '20px'}}>
+                            <Paper zDepth={3} style={{padding: '20px 20px 0 20px'}}>
+                                <h1>Seleccion de cartas de porte</h1>
+                                <p>Seleccione la/s cartas de porte que incluye el análisis. </p>
                                 <div style={{display: 'inline-block', padding: '0', width:'100%'}}>
                                     <div style={{ width:'40%'}} >
                                         <DatePicker
+                                            floatingLabelText= 'Fecha desde'
                                             style={{display: 'inline-block', width: '45%', marginRight:'5%'}}
                                             textFieldStyle={{width: '100%'}}
                                             autoOk={true}
@@ -445,6 +487,7 @@ var AnalisisNuevoAnalisis = React.createClass ({
                                             onChange={this.updateFilterFields.bind(this, 'Fecha desde')}
                                         />
                                         <DatePicker
+                                            floatingLabelText= 'Fecha hasta'
                                             style={{display: 'inline-block', width: '45%', float: 'right'}}
                                             textFieldStyle={{width: '100%'}}
                                             autoOk={true}
@@ -454,37 +497,6 @@ var AnalisisNuevoAnalisis = React.createClass ({
                                             mode="landscape"
                                             onChange={this.updateFilterFields.bind(this, 'Fecha hasta')}
                                         />
-                                    </div>
-                                    <br/>
-                                    <div style={{marginBottom:'25px'}}>
-                                        <SelectField
-                                            labelStyle={styles.selectFieldLabel}
-                                            iconStyle={styles.selectFieldIcon}
-                                            style={{height:'40px', width: '40%', float:'left'}}
-                                            menuStyle={styles.selectFieldMenu}
-                                            floatingLabelStyle={styles.selectFieldHint}
-                                            floatingLabelText='Chofer'
-                                            maxHeight={200}
-                                            ref='Chofer'
-                                            value={this.getControlledSelectFieldValue('Chofer')}
-                                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Chofer')}
-                                        >
-                                            {this.renderSelectFieldsValues('Chofer')}
-                                        </SelectField>
-                                        <SelectField
-                                            labelStyle={styles.selectFieldLabel}
-                                            iconStyle={styles.selectFieldIcon}
-                                            style={{float: 'right', height:'40px', width: '40%', marginRight:'10%'}}
-                                            menuStyle={styles.selectFieldMenu}
-                                            floatingLabelStyle={styles.selectFieldHint}
-                                            floatingLabelText='Productor'
-                                            maxHeight={200}
-                                            ref='Productor'
-                                            value={this.getControlledSelectFieldValue('Productor')}
-                                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Productor')}
-                                        >
-                                            {this.renderSelectFieldsValues('Productor')}
-                                        </SelectField>
                                     </div>
                                     <br/>
                                     <br/>
@@ -506,7 +518,7 @@ var AnalisisNuevoAnalisis = React.createClass ({
                             <br/>
                             <div>
                             <Table
-                                height={'450px'}
+                                height={'351px'}
                                 fixedHeader= {true}
                                 fixedFooter= {true}
                                 selectable={true}
@@ -529,7 +541,7 @@ var AnalisisNuevoAnalisis = React.createClass ({
                                         />
                                     </TableHeaderColumn>
                                     <TableHeaderColumn colSpan="6" tooltip="Seleccione las Cartas de Porte" style={{textAlign: 'right'}}>
-                                        Seleccione todas las Cartas de Porte correspondientes al analisis.
+                                        Seleccione todas las Cartas de Porte correspondientes al análisis.
                                     </TableHeaderColumn>
                                 </TableRow>
                                 <TableRow>
@@ -569,17 +581,257 @@ var AnalisisNuevoAnalisis = React.createClass ({
                         </TableFooter>
                         </Table>
                     </div>
+                                <Dialog
+                                    title="Se esta por dar de alta un nuevo análisis."
+                                    actions={[
+                                                <FlatButton
+                                                    label="Cancelar"
+                                                    primary={true}
+                                                    onTouchTap={this.handleCloseAltaConfirmationModal}
+                                                />,
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleAltaConfirmationModal}
+                                                />
+                                            ]}
+                                    modal={false}
+                                    open={this.state.altaConfirmationModal}
+                                >
+                                    {'Esta seguro que los datos correspondientes al nuevo análisis son correctos?'}
+                                </Dialog>
+                                <Dialog
+                                    title={"El nuevo análisis fue ingresado a la base de datos con exito"}
+                                    actions={[
+                                                <FlatButton
+                                                    label="OK"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseAltaCPModal}
+                                                />
+                                            ]}
+                                    modal={false}
+                                    open={this.state.altaAnalisisModal}
+                                >
+                                    {'Sera redireccionado a la pagina de inicio de analsis.'}
+                                </Dialog>
 
                     </Paper>
                 </div>
                 </div>
+                    <Dialog
+                        title={"Faltan campos por completar!!"}
+                        actions={[
+
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseFieldsMissingModal}
+                                                />
+                                            ]}
+                        modal={false}
+                        open={this.state.fieldsMissingModal}
+                    >
+                        {"Por favor complete los campos faltates para continuar."}
+                    </Dialog>
                 </SwipeableViews>
             </div>
         )
     },
 
+    round: function (value, exp) {
+        if (typeof exp === 'undefined' || +exp === 0)
+            return Math.round(value);
+
+        value = +value;
+        exp = +exp;
+
+        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0))
+            return NaN;
+
+        // Shift
+        value = value.toString().split('e');
+        value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
+
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
+    },
+    
+    //MISSING FIELDS
+    getRefsValues: function (key) {
+
+        console.log('this.refs[key]',this.refs[key]);
+        if (this.refs[key].props.value != null) {
+            return this.refs[key].props.value
+        } else {
+            if(this.refs[key].state != null){
+                if (this.refs[key].state.date != null) {
+                    return this.refs[key].state.date
+                }
+                if (this.refs[key].state.switched != null) {
+                    return this.refs[key].state.switched
+                }
+            }
+        }
+    },
+    handleOpenFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: true});
+    },
+    handleCloseFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: false});
+    },
+
+
+
+    handleAceptar: function () {
+        var keys = (Object.keys(this.refs));
+        var values = keys.map(this.getRefsValues);
+        var fields = {};
+
+        keys.map(function (key, index) {
+            fields[key] = values[index]
+        });
+
+
+        values = _.omit(fields, ['Fecha desde', 'Fecha hasta', 'Carta de porte']);
+
+        if (_.includes(_.values(values), undefined, 0)) {
+            this.handleOpenFieldsMissingModal();
+
+        } else {
+            this.handleOpenAltaConfirmationModal();
+        }
+
+        //this.handleOpenAltaConfirmationModal();
+    },
+    handleOpenAltaConfirmationModal: function (event) {
+        this.setState({altaConfirmationModal: true});
+
+    },
+    handleCloseAltaConfirmationModal: function () {
+        this.setState({altaConfirmationModal: false});
+    },
+
+    handleAltaConfirmationModal: function () {
+        this.makeAceptarRequest();
+        this.handleCloseAltaConfirmationModal();
+        this.setState({altaAnalisisModal: true});
+    },
+    handleCloseAltaCPModal: function () {
+        this.setState({altaAnalisisModal: false});
+        browserHistory.push('analisis');
+    },
+
+
+
+    makeAceptarRequest: function () {
+        var state = this.state;
+        var currentProductorCuil = state.currentProductorCuil;
+        var currentEspecie = state.currentEspecieDesc;
+        var currentCosecha = state.currentCosechaDesc;
+        var productorSelecionado = '';
+        var especieSeleccionada = '';
+        var cosechaSeleccionada = '';
+        var rubrosSeleccionados = [];
+        var cpsSeleccionadas = [];
+        var newAnalisisId = '';
+        var cpSeleccionada = '';
+
+        this.state.allProductoresEntities.forEach(function (productor) {
+            if (productor['cuil'] === currentProductorCuil) {
+                productorSelecionado = productor['_id'];
+            }
+        });
+
+        this.state.allEspeciesEntities.forEach(function (especie) {
+            if (especie['descripcion'] === currentEspecie) {
+
+                especie.rubros.forEach(function (rubro, index) {
+                    console.log(rubro);
+                    rubrosSeleccionados.push({"rubro": rubro['rubro'], "porcentaje": state['Porcentaje' + index]});
+                });
+
+                especieSeleccionada = especie['_id'];
+            }
+        });
+        this.state.allCosechasEntities.forEach(function (cosecha) {
+            if (cosecha['descripcion'] === currentCosecha) {
+                cosechaSeleccionada = cosecha['_id'];
+            }
+        });
+
+        for (var i = 0; i < this.state.selectedRowsArray.length; i++) {
+            var cp = this.state.cps[this.state.selectedRowsArray[i]];
+            cpSeleccionada = cp['_id'];
+            cpsSeleccionadas.push(cp['_id']);
+        }
+
+        var bodyRequested = {
+            "nro_analisis" : this.state['nroAnalisis'],
+            "productor" : productorSelecionado,
+            "especie" : especieSeleccionada,
+            "cosecha" : cosechaSeleccionada,
+            "fecha_analisis" : this.state['Fecha analisis'],
+            "costo_analisis": state['Costo'],
+            "habilitado": true,
+            "ingresos" : cpsSeleccionadas,
+            "rubros" : rubrosSeleccionados,
+            "factor" : this.state['Factor'],
+            "grado" : this.state['Grado']
+        };
+
+        fetch(this.getRequest(bodyRequested))
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                newAnalisisId = response.data['_id']
+            })
+            .then((response) => {
+
+                var analisisIdJson = JSON.stringify({"analisis": newAnalisisId});
+
+                var ingresoRequest = new Request('http://proyecto-final-prim.herokuapp.com/ingresoCereal/update/' + cpSeleccionada, {
+                    method: 'PUT',
+                    headers: new Headers({
+                        'Content-Type': 'application/json'
+                    }),
+                    body: analisisIdJson
+                });
+
+                fetch(ingresoRequest)
+                    .then((response) => {
+                        return response.json()
+                    })
+                    .then((response) => {
+                        console.log('salio bien');
+                        console.log('repsonse: ', response);
+                    })
+                }) ;
+
+
+
+    },
+
+    getRequest: function (bodyRequested) {
+        var bodyJson = JSON.stringify(bodyRequested);
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/analisis/create', {
+            method: 'POST',
+            headers: new Headers({
+                'Content-Type': 'application/json'
+            }),
+            body: bodyJson
+        });
+
+        return request
+    },
+
+
+
     handleLimpiarFiltros: function () {
-        console.log('entro al limpiarfiltros');
         this.setState({
             fechaDesde : null,
             fechaHasta: null,
@@ -661,7 +913,7 @@ var AnalisisNuevoAnalisis = React.createClass ({
                         style={{display: 'inline-block', verticalAlign: 'top' , cursor:'default'}}
                         id={'Bonificacion' + index}
                         ref='Bonificacion'
-                        value= {this.state['Bonificacion' + index]}
+                        value= {this.round(this.state['Bonificacion' + index], 2)}
                         onChange={this.handleControlledInputChange}
                         onBlur={this.calculateBonificacion.bind(this, index, row['rubro'])}
                         />
@@ -694,18 +946,12 @@ var AnalisisNuevoAnalisis = React.createClass ({
                 'Content-Type': 'application/json'
             })
         });
-        console.log('http://proyecto-final-prim.herokuapp.com/analisis/agregarRubro/' +
-            rubroID + '/' +
-            especieID + '/' +
-            porcRubro + '/' +
-            bonificacionReset);
 
         fetch(request)
             .then((response) => {
                 return response.json()
             })
             .then((response) => {
-                console.log('respuesta: ', response);
                 this.setState({
                     bonificacionReset:  false,
                     Grado: response['grado'],
@@ -716,86 +962,7 @@ var AnalisisNuevoAnalisis = React.createClass ({
 
     },
 
-    handleAceptar: function () {
-        this.makeAceptarRequest();
-    },
-    makeAceptarRequest: function () {
-        var state = this.state;
-        var currentProductorCuil = state.currentProductorCuil;
-        var currentEspecie = state.currentEspecieDesc;
-        var currentCosecha = state.currentCosechaDesc;
-        var productorSelecionado = '';
-        var especieSeleccionada = '';
-        var cosechaSeleccionada = '';
-        var rubrosSeleccionados = [];
-        var cpsSeleccionadas = [];
-
-        this.state.allProductoresEntities.forEach(function (productor) {
-            if (productor['cuil'] === currentProductorCuil) {
-                productorSelecionado = productor['_id'];
-            }
-        });
-        this.state.allEspeciesEntities.forEach(function (especie) {
-            if (especie['descripcion'] === currentEspecie) {
-
-                especie.rubros.forEach(function (rubro, index) {
-                    rubrosSeleccionados.push({"rubro": rubro['rubro'], "porcentaje": state['Porcentaje' + index]});
-                });
-
-                especieSeleccionada = especie['_id'];
-            }
-        });
-        this.state.allCosechasEntities.forEach(function (cosecha) {
-            if (cosecha['descripcion'] === currentCosecha) {
-                cosechaSeleccionada = cosecha['_id'];
-            }
-        });
-
-        for (var i = 0; i < this.state.selectedRowsArray.length; i++) {
-            var cp = this.state.cps[this.state.selectedRowsArray[i]];
-
-            cpsSeleccionadas.push(cp['_id']);
-        }
-
-        var bodyRequested = {
-            "nro_analisis" : this.state['nroAnalisis'],
-            "productor" : productorSelecionado,
-            "especie" : especieSeleccionada,
-            "cosecha" : cosechaSeleccionada,
-            "fecha_analisis" : this.state['Fecha analisis'],
-            "costo_analisis": state['Costo'],
-            "habilitado": true,
-            "ingresos" : cpsSeleccionadas,
-            "rubros" : rubrosSeleccionados
-        };
-
-        console.log('bodyRequested: ', bodyRequested);
-        console.log('bodyRequested: ', bodyRequested);
-        console.log('bodyRequested: ', bodyRequested);
-
-        /*fetch(this.getRequest(bodyRequested))
-            .then((response) => {
-                return response.json()
-            })
-            .then((response) => {
-                console.log('respuesta: ', response);
-                /!*this.setState({
-                 items: response.data
-                 });*!/
-            })*/
-    },
-    getRequest: function (bodyRequested) {
-        var bodyJson = JSON.stringify(bodyRequested);
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/analisis/create', {
-            method: 'POST',
-            headers: new Headers({
-                'Content-Type': 'application/json'
-            }),
-            body: bodyJson
-        });
-
-        return request
-    },
+    
 
 
     getAllProductores: function () {
@@ -971,7 +1138,6 @@ var AnalisisNuevoAnalisis = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                console.log('response', response);
                 this.setState({
                     cps: response.data
                 });

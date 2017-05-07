@@ -23,6 +23,7 @@ const choferAltaFormFields = [
     {label: 'cuil', type: 'input'},
     {label: 'dni', type: 'input'},
     {label: 'fecha de nacimiento', type: 'date-picker'},
+    {label: 'provincia', type: 'input'},
     {label: 'localidad', type: 'input'},
     {label: 'direccion', type: 'input'},
     {label: 'telefono', type: 'input'},
@@ -62,6 +63,7 @@ const productorAltaFormFields = [
     {label: 'fecha de nacimiento', type: 'date-picker'},
     {label: 'telefono', type: 'input'},
     {label: 'direccion', type: 'input'},
+    {label: 'provincia', type: 'input'},
     {label: 'localidad', type: 'input'},
     {label: 'iva', type: 'select-field'},
     {label: 'habilitado', type: 'toggle'}
@@ -79,6 +81,7 @@ const transportistaAltaFormFields = [
     {label: 'razon_social', type: 'input'},
     {label: 'cuit', type: 'input'},
     {label: 'telefono', type: 'input'},
+    {label: 'provincia', type: 'input'},
     {label: 'localidad', type: 'input'},
     {label: 'domicilio', type: 'input'},
     {label: 'iva', type: 'select-field'},
@@ -102,6 +105,7 @@ const usuarioAltaFormFields = [
 const campoAltaFormFields = [
     {label: 'productor', type: 'select-field'}, // cuil
     {label: 'nombre', type: 'input'},
+    {label: 'provincia', type: 'input'},
     {label: 'localidad', type: 'input'},
     {label: 'direccion', type: 'input'},
     {label: 'hectareas', type: 'input'},
@@ -110,9 +114,16 @@ const campoAltaFormFields = [
 const empresaAltaFormFields = [
     {label: 'razon_social', type: 'input'},
     {label: 'cuit', type: 'input'},
+    {label: 'provincia', type: 'input'},
     {label: 'localidad', type: 'input'},
     {label: 'domicilio', type: 'input'},
     {label: 'iva', type: 'select-field'},
+    {label: 'habilitado', type: 'toggle'}
+];
+const puertoAltaFormFields = [
+    {label: 'nombre', type: 'input'},
+    {label: 'provincia', type: 'input'},
+    {label: 'localidad', type: 'input'},
     {label: 'habilitado', type: 'toggle'}
 ];
 
@@ -142,7 +153,8 @@ const headersMod = {
     rubro: ['descripcion'],
     tarifa: ['descripcion', 'tarifa'],
     transportista: ['cuit', 'razon_social', 'localidad'],
-    usuario: ['usuario', 'contraseña']
+    usuario: ['usuario', 'contraseña'],
+    puerto: ['nombre', 'localidad']
 };
 
 //URLs TO MAKE REQUEST for modLIST** to GETALL
@@ -329,6 +341,19 @@ const requestParameters = {
         url: 'cosechas/getAll',
         method: 'GET'
     },
+    //PUERTO
+    puertoAlta: {
+        url: 'puertos/create',
+        method: 'POST'
+    },
+    puertoBaja: {
+        url: 'puertos/getAll',
+        method: 'GET'
+    },
+    puertoModList: {
+        url: 'puertos/getAll',
+        method: 'GET'
+    },
     //EMPRESA
     empresaAlta: {
         url: 'empresas/create',
@@ -511,6 +536,16 @@ var RoutingComponent = React.createClass ({
         if (forward === 'empresaModForm') {
             mainContent = (<EntityModList type='Modificacion' entity='empresa' headers={headersMod.empresa} requestParameters={requestParameters.empresaModList} />)
         }
+        //PUERTO
+        if (forward === 'puertoAltaForm') {
+            mainContent = (<ABMForm type='Alta' entity='puerto' items={puertoAltaFormFields} requestParameters={requestParameters.puertoAlta} />)
+        }
+        if (forward === 'puertoBajaForm') {
+            mainContent = (<EntityBajaList type='Baja' entity='puerto' headers={headersMod.puerto} requestParameters={requestParameters.puertoBaja} />)
+        }
+        if (forward === 'puertoModForm') {
+            mainContent = (<EntityModList type='Modificacion' entity='puerto' headers={headersMod.puerto} requestParameters={requestParameters.puertoModList} />)
+        }
 
         return mainContent
     },
@@ -643,6 +678,15 @@ var RoutingComponent = React.createClass ({
             if (entity === 'destino') {
                 mainContent = (<ABMForm type='Modificacion' entity='destino' items={destinoAltaFormFields} requestParameters={{
                                         url: 'destinos/' + this.props.params.identifier,
+                                        identifier: this.props.params.identifier,
+                                        method: 'GET'
+                                        }}
+                    />)
+            }
+            //PUERTO
+            if (entity === 'puerto') {
+                mainContent = (<ABMForm type='Modificacion' entity='puerto' items={puertoAltaFormFields} requestParameters={{
+                                        url: 'puertos/' + this.props.params.identifier,
                                         identifier: this.props.params.identifier,
                                         method: 'GET'
                                         }}

@@ -1,6 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 
+import {browserHistory} from 'react-router';
 import TextField from 'material-ui/TextField';
 import Paper from 'material-ui/Paper';
 import RaisedButton from 'material-ui/RaisedButton';
@@ -9,6 +10,8 @@ import SelectField from 'material-ui/SelectField';
 import MenuItem from 'material-ui/MenuItem';
 import DatePicker from 'material-ui/DatePicker';
 import Checkbox from 'material-ui/Checkbox';
+import Dialog from 'material-ui/Dialog';
+import FlatButton from 'material-ui/FlatButton';
 
 import DoneAllIcon from 'react-material-icons/icons/action/done-all';
 
@@ -68,7 +71,11 @@ var AltaForm = React.createClass ({
             rubrosDesc: [],
             especiesDesc: [],
             ivas: ['Régimen Simplificado', 'Responsable Inscripto', 'Exento', 'Consumidor Final'],
-            estadoCamiones: ['Disponible', 'No disponible']
+            estadoCamiones: ['Disponible', 'No disponible'],
+
+            altaConfirmationModal: false,
+            altaABMModal: false,
+            fieldsMissingModal: false
         }
 
     },
@@ -112,7 +119,6 @@ var AltaForm = React.createClass ({
     },
 
     render() {
-        console.log('statedos: ', this.state);
         return (
             <div style={styles.mainDiv}>
                 <Paper zDepth={3} style={styles.mainPaper}>
@@ -127,9 +133,67 @@ var AltaForm = React.createClass ({
                         style={styles.botonAltaAceptar}
                         backgroundColor="#8BC34A"
                         label="Aceptar"
-                        onTouchTap={this.handleSubmit}
+                        onTouchTap={this.handleAceptar}
                         />
                 </Paper>
+
+                <Dialog
+                    title={"Se esta por ingresar un nuevo registro a la base de datos"}
+                    actions={[
+                                                <FlatButton
+                                                    label="Cancelar"
+                                                    primary={true}
+                                                    onTouchTap={this.handleCloseAltaConfirmationModal}
+                                                />,
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleAltaConfirmationModal}
+                                                />
+                                            ]}
+                    modal={false}
+                    open={this.state.altaConfirmationModal}
+                    >
+                    {"Esta seguro que los datos correspondientes son correctos?"}
+                </Dialog>
+                <Dialog
+                    title={"El nuevo registro fue ingresado a la base de datos con exito"}
+                    actions={[
+                                                <FlatButton
+                                                    label="OK"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseAltaABMModal}
+                                                />
+                                            ]}
+                    modal={false}
+                    open={this.state.altaABMModal}
+                    >
+                    {'Sera redireccionado a la pagina de inicio.'}
+                </Dialog>
+
+
+
+
+                <Dialog
+                    title={"Faltan campos por completar!!"}
+                    actions={[
+
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseFieldsMissingModal}
+                                                />
+                                            ]}
+                    modal={false}
+                    open={this.state.fieldsMissingModal}
+                >
+                    {"Por favor complete los campos faltates para continuar."}
+                </Dialog>
+
+
             </div>
         );
 
@@ -143,6 +207,7 @@ var AltaForm = React.createClass ({
         if (item.type === 'input') {
             node = (
                 <TextField
+                    errorText={this.state[item.label + 'error']}
                     style={{height:'60px', display:'block'}}
                     underlineStyle={{borderColor: '#8BC34A'}}
                     underlineFocusStyle={{borderColor: '#4CAF50'}}
@@ -152,6 +217,7 @@ var AltaForm = React.createClass ({
                     fullWidth
                     ref={[item.label]}
                     onChange={this.handleControlledInputChange}
+                    onBlur={this.handleControlledInputBlur}
                     value= {this.state[item.label]}
                     hintText= {this.toTitleCase(item.label)}
                     floatingLabelText= {this.toTitleCase(item.label)}
@@ -164,6 +230,8 @@ var AltaForm = React.createClass ({
         if (item.type === 'password') {
             node = (
                 <TextField
+                    errorText={this.state[item.label + 'error']}
+                    onBlur={this.handleControlledInputBlur}
                     style={{height:'60px'}}
                     floatingLabelStyle={{lineHeight:'10px'}}
                     hintStyle={{bottom:'7px'}}
@@ -252,13 +320,11 @@ var AltaForm = React.createClass ({
     toTitleCase: function (str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
     },
-    
     renderRubrosCheckBoxGroup: function () {
         var group = this.state.rubrosDesc.map(this.renderRubroCheckBox);
         
         return group
     },
-
     renderRubroCheckBox: function (value, key) {
         return (
             <Checkbox
@@ -269,7 +335,6 @@ var AltaForm = React.createClass ({
             />
         )
     },
-
     cleanRubrosDeEspecie: function () {
         var rubrosDeEspecies = this.state.currentRubrosDeEspecie;
         var rubros = [];
@@ -283,7 +348,6 @@ var AltaForm = React.createClass ({
         });
 
     },
-
     defaultRubroCheckbox: function (value) {
         var currentRubros = this.state.currentRubrosDeEspecie;
         var checked = false;
@@ -321,10 +385,6 @@ var AltaForm = React.createClass ({
         });
 
     },
-
-
-
-
     //SETS THE VALUES FOR THE CORRESPONDING DROPDOWNS
     renderSelectFieldsValues: function (label) {
         var values;
@@ -362,17 +422,40 @@ var AltaForm = React.createClass ({
 
         return values
     },
-
     //HANDLERS FOR CONTROLLED FIELDS VALUE CHANGES
         //crea y updetea estados segun los labels de los campos que tengo
         //le mete el valor actual del campo
         //ejemplo ---- cuil: 32435574
     handleControlledInputChange: function (event) {
         this.setState({
-            [event.target.id]: event.target.value
+            [event.target.id]: event.target.value,
+            [event.target.id + 'error']: ''
         });
 
     },
+    
+    //MENEJO DE ERRORES
+    handleControlledInputBlur: function (event) {
+        if (event.target.value === '') {
+            this.setState({
+                [event.target.id + 'error']: 'Este campo es requerido.'
+            });
+        }
+        else {
+            this.setState({
+                [event.target.id + 'error']: false
+            });
+        }
+
+    },
+    handleOpenFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: true});
+    },
+    handleCloseFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: false});
+    },
+   
+   
         //guarda el valor actual de cada dropdown en un estado aparte
         //solo updetea el estado del valor seleccionado para cada field
     handleControlledSelectFieldValueChange: function (label, event, key, payload) {
@@ -455,10 +538,24 @@ var AltaForm = React.createClass ({
             }
         }
     },
-
-
-
     //EXECUTED ONCE THE FORM IS SUBMITTED, CREATES OBJECT FOR THE API AND SENDS IT
+    handleAceptar: function () {
+        var keys = (Object.keys(this.refs));
+        var values = keys.map(this.getRefsValues);
+        var object = {};
+
+        keys.map(function (key, index) {
+            object[key] = values[index]
+        });
+
+        if (_.includes(values, undefined, 0)) {
+            this.handleOpenFieldsMissingModal();
+
+        } else {
+            this.handleOpenAltaConfirmationModal();
+        }
+    },
+
     handleSubmit: function () {
         var keys = (Object.keys(this.refs));
         var values = keys.map(this.getRefsValues);
@@ -543,7 +640,6 @@ var AltaForm = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                console.log('respuesta: ', response);
             })
     },
     handleModRequest: function (requestBody) {
@@ -564,10 +660,28 @@ var AltaForm = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                console.log('respuesta: ', response);
             })
     },
 
+    
+
+    handleOpenAltaConfirmationModal: function (event) {
+        this.setState({altaConfirmationModal: true});
+
+    },
+    handleCloseAltaConfirmationModal: function () {
+        this.setState({altaConfirmationModal: false});
+    },
+
+    handleAltaConfirmationModal: function () {
+        this.handleSubmit();
+        this.handleCloseAltaConfirmationModal();
+        this.setState({altaABMModal: true});
+    },
+    handleCloseAltaABMModal: function () {
+        this.setState({altaABMModal: false});
+        browserHistory.push('/welcome');
+    },
 
 //***************DE ACA PARA ABAJO NO HAY MUCHA MAGIA ********************************
 
@@ -586,7 +700,6 @@ var AltaForm = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                console.log('response.data ', response);
 
                 if (response.data) {
                     var values = Object.values(response.data);
@@ -640,7 +753,6 @@ var AltaForm = React.createClass ({
                     keys.forEach(this.setFieldsValues);
 
                 } else {
-                    console.log('response: ', response);
                 }
 
             })
@@ -756,7 +868,6 @@ var AltaForm = React.createClass ({
                 });
             })
     },
-
     //El metodo mas pedorro
     getEntidad: function () {
         var entidad;
@@ -805,6 +916,9 @@ var AltaForm = React.createClass ({
         }
         if (this.props.entity === 'empresa') {
             entidad = 'empresas'
+        }
+        if (this.props.entity === 'puerto') {
+            entidad = 'puertos'
         }
 
         return entidad;

@@ -40,23 +40,26 @@ const styles = {
         width: '23%'
     },
     textField: {
-        display: 'inline-block',
-        verticalAlign: 'top'
+        display: 'block'
     },
     selectField: {
-        marginRight: '20px',
-        verticalAlign: 'top',
-        width: '42%'
+        float: 'right',
+        height:'40px',
+        width: '40%'
     },
-    textFieldMain: {
-        display: 'inline-block',
-        verticalAlign: 'top',
-        width: '60%'
+    selectFieldIcon: {
+        height:'18px',
+        padding: '0',
+        top: '-4px'
     },
-    selectFieldMain: {
-        marginRight: '20px',
-        verticalAlign: 'top',
-        width: '60%'
+    selectFieldLabel: {
+        top:'-25'
+    },
+    selectFieldMenu: {
+        height:'50%'
+    },
+    selectFieldHint: {
+        top:'7px'
     },
     datePicker: {
         verticalAlign: 'bottom',
@@ -64,51 +67,13 @@ const styles = {
         width: '30%'
     }
 };
-const tableData = [
-    {
-        name: 'John Smith',
-        status: 'Employed',
-        selected: true
-    },
-    {
-        name: 'Randal White',
-        status: 'Unemployed'
-    },
-    {
-        name: 'Stephanie Sanders',
-        status: 'Employed',
-        selected: true,
-    },
-    {
-        name: 'Steve Brown',
-        status: 'Employed',
-    },
-    {
-        name: 'Joyce Whitten',
-        status: 'Employed',
-    },
-    {
-        name: 'Samuel Roberts',
-        status: 'Employed',
-    },
-    {
-        name: 'Adam Moore',
-        status: 'Employed',
-    },
-];
 
-import DeleteIcon from 'react-material-icons/icons/action/delete';
-
-var CertificadoDeDeposito = React.createClass ({
+var EgresoDeCerealInicio = React.createClass ({
 
     propTypes: {
         handleMainSectionChange: React.PropTypes.func
     },
-    getDefaultProps: function() {
-        return {
-            name: 'Mary'
-        };
-    },
+
     getInitialState: function () {
         return {
             fixedHeader: true,
@@ -120,7 +85,7 @@ var CertificadoDeDeposito = React.createClass ({
             enableSelectAll: false,
             deselectOnClickaway: true,
             showCheckboxes: false,
-            height: '510px',
+
 
 
             items: [],
@@ -138,21 +103,19 @@ var CertificadoDeDeposito = React.createClass ({
             productoresCuil: [],
             choferesCuil: [],
             allChoferesEntities: [],
-            allProductoresEntities: [],
-
-            nroCertificado: '',
+            allProductoresEntities: []
 
         }
 
     },
     componentDidUpdate: function (nextProps, nextState) {
-       /* if (this.state.currentChoferCuil != nextState.currentChoferCuil){
+        if (this.state.currentChoferCuil != nextState.currentChoferCuil){
             this.filter();
         }
 
         if (this.state.currentProductorCuil != nextState.currentProductorCuil){
             this.filter();
-        }*/
+        }
     },
     componentDidMount: function() {
         this.getAllProductores();
@@ -172,7 +135,7 @@ var CertificadoDeDeposito = React.createClass ({
             })
     },
     getRequest: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/getAll', {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/egresoCereal/getAll', {
             method: 'GET',
             headers: new Headers({
                 'Content-Type': 'text/plain'
@@ -182,10 +145,6 @@ var CertificadoDeDeposito = React.createClass ({
         return request
     },
 
-
-
-    
-/*
     updateFilterFields: function (field, event, date) {
         var day = date.getDate();
         var month = date.getMonth() + 1;
@@ -226,7 +185,6 @@ var CertificadoDeDeposito = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                console.log('response', response);
                 this.setState({
                     items: response.data
                 });
@@ -274,140 +232,210 @@ var CertificadoDeDeposito = React.createClass ({
         }
         return section
     },
-*/
+
+    getControlledSelectFieldValue: function (label) {
+        var value='';
+
+        if (label === 'Productor') {
+            value = this.state.currentProductorCuil;
+        }
+        if (label === 'Chofer') {
+            value = this.state.currentChoferCuil;
+        }
+
+        return value
+    },
+    handleControlledSelectFieldValueChange: function (label, event, key, payload) {
+
+        if (label === 'Productor') {
+            this.setState({
+                currentProductorCuil: payload
+            }, this.filter());
+        }
+        if (label === 'Chofer') {
+            this.setState({
+                currentChoferCuil: payload
+            }, this.filter());
+        }
+
+
+    },
+    renderSelectFieldsValues: function (label) {
+        var values;
+
+        if (label === 'Productor') {
+            values = this.state.productoresCuil.map(function (value, key) {
+                return <MenuItem value={value} key={key} primaryText={value}/>
+            })
+        }
+        if (label === 'Chofer') {
+            values = this.state.choferesCuil.map(function (value, key) {
+                return <MenuItem value={value} key={key} primaryText={value}/>
+            })
+        }
+
+        return values
+    },
+
+    handleLimpiarFiltros: function () {
+        console.log('entro al limpiarfiltros');
+        this.setState({
+            fechaDesde : null,
+            fechaHasta: null,
+            chofer: '',
+            currentChoferCuil: '',
+            productor: '',
+            currentProductorCuil: '',
+            'Carta de porte': ''
+        }, this.makeRequest());
+
+
+    },
 
     handleControlledInputChange: function (event) {
         this.setState({
             [event.target.id]: event.target.value
-        },  this.filtrarCertificado(event.target.value));
+        }, this.filter());
 
     },
-
-    filtrarCertificado: function (nroCert) {
-        var request;
-
-        if (nroCert === '') {
-            request = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/getAll' , {
-                method: 'GET',
-                headers: new Headers({
-                    'Content-Type': 'application/json'
-                })
-            });
-
-            fetch(request)
-                .then((response) => {
-                    return response.json()
-                })
-                .then((response) => {
-                    this.setState({
-                        items: response.data
-                    });
-                })
-        } else {
-            request = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/filtrar/false/' + nroCert , {
-                method: 'GET',
-                headers: new Headers({
-                    'Content-Type': 'application/json'
-                })
-            });
-
-            fetch(request)
-                .then((response) => {
-                    return response.json()
-                })
-                .then((response) => {
-                    this.setState({
-                        items: response.data
-                    });
-                })
-        }
-
-    },
-    //*****************************************************************//
-    //falta ver los campos que van se van a usar para el filtrado
 
     render() {
         return (
             <div style={{width:'100%'}}>
                 <Paper zDepth={3} style={{padding: '20px'}}>
-                    <h1>Certificado de Depósito</h1>
-                    <p>Para encontrar el certificado deseado rápidamente, si conoce el número de certificado, puede filtrar los certificados que se encuentran en la base de datos usando el campo a continuación. </p>
+                    <h1>Egreso de cereal</h1>
+                    <p>Para filtrar los egresos que se encuentran en la base de datos, utilice los campos a continuación. </p>
                     <div style={{display: 'inline-block', padding: '0', width:'100%'}}>
+                        <div style={{ width:'40%'}} >
+                            <DatePicker
+                                style={{display: 'inline-block', width: '45%', marginRight:'5%'}}
+                                textFieldStyle={{width: '100%'}}
+                                autoOk={true}
+                                DateTimeFormat={global.Intl.DateTimeFormat}
+                                cancelLabel='Cerrar'
+                                hintText='Fecha desde'
+                                ref='Fecha desde'
+                                mode="landscape"
+                                onChange={this.updateFilterFields.bind(this, 'Fecha desde')}
+                            />
+                            <DatePicker
+                                style={{display: 'inline-block', width: '45%', float: 'right'}}
+                                textFieldStyle={{width: '100%'}}
+                                autoOk={true}
+                                cancelLabel='Cerrar'
+                                hintText='Fecha hasta'
+                                ref='Fecha hasta'
+                                mode="landscape"
+                                onChange={this.updateFilterFields.bind(this, 'Fecha hasta')}
+                            />
+                        </div>
+                        <br/>
+                        <div>
+                            <SelectField
+                                labelStyle={styles.selectFieldLabel}
+                                iconStyle={styles.selectFieldIcon}
+                                style={{height:'40px', width: '40%', float:'left'}}
+                                menuStyle={styles.selectFieldMenu}
+                                floatingLabelStyle={styles.selectFieldHint}
+                                floatingLabelText='Chofer'
+                                maxHeight={200}
+                                ref='Chofer'
+                                value={this.getControlledSelectFieldValue('Chofer')}
+                                onChange={this.handleControlledSelectFieldValueChange.bind(this,'Chofer')}
+                            >
+                                {this.renderSelectFieldsValues('Chofer')}
+                            </SelectField>
+                            <SelectField
+                                labelStyle={styles.selectFieldLabel}
+                                iconStyle={styles.selectFieldIcon}
+                                style={{float: 'right', height:'40px', width: '40%', marginRight:'17%'}}
+                                menuStyle={styles.selectFieldMenu}
+                                floatingLabelStyle={styles.selectFieldHint}
+                                floatingLabelText='Productor'
+                                maxHeight={200}
+                                ref='Productor'
+                                value={this.getControlledSelectFieldValue('Productor')}
+                                onChange={this.handleControlledSelectFieldValueChange.bind(this,'Productor')}
+                            >
+                                {this.renderSelectFieldsValues('Productor')}
+                            </SelectField>
+                        </div>
+                        <br/>
+                        <br/>
                         <TextField
-                            style={{display:'inline-block', marginRight:'15px'}}
+                            style={styles.textField}
                             floatingLabelStyle={{lineHeight:'10px'}}
                             hintStyle={{bottom:'7px'}}
-                            underlineStyle={{width:'100%'}}
-                            hintText='Nro. de Certificado'
-                            floatingLabelText='Nro. de Certificado'
-                            id='nroCertificado'
-                            ref='nroCertificado'
-                            value= {this.state['nroCertificado']}
+                            hintText='Carta de porte'
+                            floatingLabelText='Carta de porte'
+                            id='Carta de porte'
+                            ref='Carta de porte'
+                            value= {this.state['Carta de porte']}
                             onChange={this.handleControlledInputChange}
-                            onBlur={this.handleControlledInputChange}
                         />
                     </div>
                     <br/>
+                    <br/>
                     <div>
                         <Table
-                            height={this.state.height}
+                            height={'395px'}
                             fixedHeader={this.state.fixedHeader}
                             fixedFooter={this.state.fixedFooter}
-                            selectable={false}
-                            multiSelectable={false}
+                            selectable={this.state.selectable}
+                            multiSelectable={this.state.multiSelectable}
                             onCellClick={this.handleSelection}
-                            >
+                        >
                             <TableHeader
-                                displaySelectAll={false}
+                                displaySelectAll={this.state.showCheckboxes}
                                 adjustForCheckbox={this.state.showCheckboxes}
-                                enableSelectAll={false}
-                                >
+                                enableSelectAll={this.state.enableSelectAll}
+                            >
                                 <TableRow>
-                                    <TableHeaderColumn colSpan="7" tooltip="Para ver un certificado solo debe clickearlo" style={{textAlign: 'right'}}>
-                                        Para ver un certificado sólo debe clickearlo
+                                    <TableHeaderColumn colSpan="4" tooltip="Utilice este botón para limpiar los filtros y traer todo los egresos nuevamente." style={{textAlign: 'left', paddingLeft:'0px'}}>
+                                        <RaisedButton
+                                            style={{margin:'10px 0px'}}
+                                            backgroundColor="#8BC34A"
+                                            label="Limpiar"
+                                            onTouchTap={this.handleLimpiarFiltros}
+                                        />
+                                    </TableHeaderColumn>
+                                    <TableHeaderColumn colSpan="4" tooltip="Agregar una nueva carta de porte" style={{textAlign: 'right'}}>
+                                        Para modificar una CP sólo debe seleccionarla, para agregar una nueva haga click en "Agregar".
                                         <RaisedButton
                                             style={{margin:'10px'}}
                                             backgroundColor="#8BC34A"
-                                            label="Generar nuevo Certificado"
-                                            onTouchTap={this.handleGenerarNuevoCertificado}
-                                            />
+                                            label="Agregar"
+                                            onTouchTap={this.handleAgregarCP}
+                                        />
                                     </TableHeaderColumn>
                                 </TableRow>
-                                <TableRow>
-                                    <TableHeaderColumn colSpan="7" tooltip="Para dar de baja algún certificado clickee el botón" style={{textAlign: 'right'}}>
-                                        Para dar de baja algún certificado clickee el botón
-                                        <RaisedButton
-                                            style={{margin:'10px'}}
-                                            backgroundColor="#8BC34A"
-                                            icon={<DeleteIcon style={{paddingBottom: '6px'}} />}
-                                            label="Dar de baja"
-                                            buttonStyle={{width:'255.6px'}}
-                                            onTouchTap={this.handleDarDeBajaCertificado}
-                                            />
-                                    </TableHeaderColumn>
-                                </TableRow>
-                                <TableRow>
-                                    <TableHeaderColumn tooltip="Nro. de certificado">Nro. de certificado</TableHeaderColumn>
-                                    <TableHeaderColumn tooltip="Nro. de carta de porte">Nro. de carta de porte</TableHeaderColumn>
-                                    <TableHeaderColumn tooltip="Fecha Emisión">Fecha Emision</TableHeaderColumn>
+                                <TableRow style={{width: '100%'}}>
+                                    <TableHeaderColumn tooltip="Carta de Porte">Carta de Porte</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="Fecha Emision">Fecha Emision</TableHeaderColumn>
                                     <TableHeaderColumn tooltip="KG. Bruto">KG. Bruto</TableHeaderColumn>
                                     <TableHeaderColumn tooltip="KG. Tara">KG. Tara</TableHeaderColumn>
                                     <TableHeaderColumn tooltip="KG. Neto">KG. Neto</TableHeaderColumn>
-                                    <TableHeaderColumn tooltip="Calidad">Calidad</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="Chofer cuil">Chofer cuil</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="Chofer nombre">Chofer nombre</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="Camion patente">Camion patente</TableHeaderColumn>
                                 </TableRow>
                             </TableHeader>
                             <TableBody
-                                displayRowCheckbox={false}
+                                displayRowCheckbox={this.state.showCheckboxes}
                                 deselectOnClickaway={this.state.deselectOnClickaway}
-                                showRowHover={true}
-                                stripedRows={false}
-                                >
+                                showRowHover={this.state.showRowHover}
+                                stripedRows={this.state.stripedRows}
+                            >
                                 {this.renderRows()}
                             </TableBody>
                             <TableFooter
                                 adjustForCheckbox={this.state.showCheckboxes}
-                                >
+                            >
+                                <TableRow>
+                                    <TableRowColumn colSpan="3" style={{textAlign: 'center'}}>
 
+                                    </TableRowColumn>
+                                </TableRow>
                             </TableFooter>
                         </Table>
                     </div>
@@ -423,16 +451,18 @@ var CertificadoDeDeposito = React.createClass ({
             return (items.map(this.renderRow))
         }
     },
+
     renderRow: function (row, index) {
         return(
             <TableRow key={index} selected={row.selected} >
-                <TableRowColumn>{row['numero']}</TableRowColumn>
-                <TableRowColumn>{row.ingreso['nro_cp']}</TableRowColumn>
-                <TableRowColumn>{row.ingreso['fecha_emision']}</TableRowColumn>
-                <TableRowColumn>{row.ingreso['kg_bruto']}</TableRowColumn>
-                <TableRowColumn>{row.ingreso['kg_tara']}</TableRowColumn>
-                <TableRowColumn>{row.ingreso['kg_neto']}</TableRowColumn>
-                <TableRowColumn>{row.ingreso['calidad']}</TableRowColumn>
+                <TableRowColumn>{row['nro_cp']}</TableRowColumn>
+                <TableRowColumn>{row['fecha_emision']}</TableRowColumn>
+                <TableRowColumn>{row['kg_bruto']}</TableRowColumn>
+                <TableRowColumn>{row['kg_tara']}</TableRowColumn>
+                <TableRowColumn>{row['kg_neto']}</TableRowColumn>
+                <TableRowColumn>{row.chofer['cuil']}</TableRowColumn>
+                <TableRowColumn>{row.chofer['nombre']}</TableRowColumn>
+                <TableRowColumn>{row['patente']}</TableRowColumn>
             </TableRow>
         )
     },
@@ -450,14 +480,11 @@ var CertificadoDeDeposito = React.createClass ({
     handleSelection: function (rowNumber, columnId) {
         var selectedItem = this.state.items[rowNumber];
 
-        browserHistory.push('certificadodedeposito/listadoCertificadoDeDeposito/' + selectedItem['_id']);
+        browserHistory.push('egresodecereal/mod/' + selectedItem['_id']);
     },
 
-    handleGenerarNuevoCertificado: function () {
-        browserHistory.push('certificadodedeposito/nuevoCertificadoDeDeposito');
-    },
-    handleDarDeBajaCertificado: function () {
-        browserHistory.push('certificadodedeposito/bajaCertificadoDeDeposito');
+    handleAgregarCP: function () {
+        browserHistory.push('egresodecereal/altaCP');
     },
 
 
@@ -508,4 +535,4 @@ var CertificadoDeDeposito = React.createClass ({
 
 });
 
-export default CertificadoDeDeposito;
+export default EgresoDeCerealInicio;

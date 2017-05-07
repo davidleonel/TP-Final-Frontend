@@ -16,6 +16,9 @@ import {RadioButton, RadioButtonGroup} from 'material-ui/RadioButton';
 import Dialog from 'material-ui/Dialog';
 import FlatButton from 'material-ui/FlatButton';
 
+import {Table, TableBody, TableFooter, TableHeader, TableHeaderColumn, TableRow, TableRowColumn}
+    from 'material-ui/Table';
+
 const styles = {
     headline: {
         fontSize: 24,
@@ -75,7 +78,7 @@ for (let i = 0; i < 100; i++ ) {
 }
 
 
-var IngresoDeCerealMainTabs = React.createClass ({
+var EgresoDeCerealMainTabs = React.createClass ({
 
     getInitialState: function () {
         return {
@@ -101,6 +104,8 @@ var IngresoDeCerealMainTabs = React.createClass ({
             allEspeciesEntities: [],
             allCosechasEntities: [],
             allCamposEntities: [],
+            allCertificadosEntities: [],
+            allPuertosEntities: [],
             productoresCuil: [],
             especiesDesc: [],
             cosechasDesc: [],
@@ -109,7 +114,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
             transportistasRazonSocial:[],
             tarifasDesc:[],
             destinosDesc:[],
-            calidades: ['Conforme', 'Condicional'],
+            calidades: ['conforme', 'condicional'],
             mermasHumedadPorc: [],
 
             currentProductorCuil:'',
@@ -140,16 +145,13 @@ var IngresoDeCerealMainTabs = React.createClass ({
             '% Humedad': 0,
             '% Zarandeo': 0,
             '% Volátil': 0,
-            'Kgs. Humedad': 0,
-            'Kgs. Zarandeo': 0,
-            'Kgs. Volátil': 0,
+            'Kgs. Humedad': '',
+            'Kgs. Zarandeo': '',
+            'Kgs. Volátil': '',
             Total: 0,
             'Neto Final': 0,
 
-
             fieldsMissingModal: false
-
-
         }
 
     },
@@ -165,12 +167,37 @@ var IngresoDeCerealMainTabs = React.createClass ({
         this.getAllDestinos();
         this.getAllMermasHumedad();
 
+        this.getAllPuertos();
+        this.getAllCertificados();
+
         this.setState({
-                itemSelected:  this.props.params.identifier
+            itemSelected:  this.props.params.identifier
         });
 
+        this.makeVentasRequest();
     },
 
+    makeVentasRequest: function () {
+        fetch(this.getVentasRequest())
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                this.setState({
+                    items: response.data
+                });
+            })
+    },
+    getVentasRequest: function () {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/liquidacion/getLiquidacionesPendientes', {
+            method: 'GET',
+            headers: new Headers({
+                'Content-Type': 'text/plain'
+            })
+        });
+
+        return request
+    },
 
     setFleteCortoValue: function () {
         this.setState({
@@ -417,22 +444,60 @@ var IngresoDeCerealMainTabs = React.createClass ({
             });
         }
     },
-    
+
+
     handleControlledInputChange: function (event) {
         this.setState({
             [event.target.id]: event.target.value
         }, this.calculateGranosBox(event.target.id, event.target.value));
 
-        if (event.target.value === '') {
-            this.setState({
-                [event.target.id + 'error']: 'Este campo es requerido.'
-            });
-        }  else {
-            this.setState({
-                [event.target.id + 'error']: false
-            });
+        if (event.target.id === 'nroLiquidacion') {
+            this.filtrarCertificado(event.target.value);
         }
     },
+
+    filtrarCertificado: function (nroLiquidacion) {
+        var request;
+
+        if (nroLiquidacion === '') {
+            request = new Request('http://proyecto-final-prim.herokuapp.com/liquidacion/getLiquidacionesPendientes' , {
+                method: 'Get',
+                headers: new Headers({
+                    'Content-Type': 'application/json'
+                })
+            });
+
+            fetch(request)
+                .then((response) => {
+                    return response.json()
+                })
+                .then((response) => {
+                    this.setState({
+                        items: response.data
+                    });
+                })
+        } else {
+            request = new Request('http://proyecto-final-prim.herokuapp.com/liquidacion/filtrar/' + nroLiquidacion , {
+                method: 'GET',
+                headers: new Headers({
+                    'Content-Type': 'application/json'
+                })
+            });
+
+            fetch(request)
+                .then((response) => {
+                    return response.json()
+                })
+                .then((response) => {
+                    this.setState({
+                        items: response.data
+                    });
+                })
+        }
+
+    },
+
+
     calculateGranosBox: function (id, value) {
         console.log('state humedad', this.state['% Humedad']);
         this.calculatePesoNeto();
@@ -511,6 +576,100 @@ var IngresoDeCerealMainTabs = React.createClass ({
 
     },
 
+    handleRowSelection: function (selectedRows) {
+        var index = selectedRows[0];
+        var request;
+        var certificado = {};
+        var productor = {};
+        var especie = {};
+        var cosecha = {};
+        var procedencia = {};
+
+        console.log('venta Seleccionada:', this.state.items[index]);
+
+
+        request = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/getCertificado/' + this.state.items[index].certificado , {
+            method: 'Get',
+            headers: new Headers({
+                'Content-Type': 'application/json'
+            })
+        });
+
+        fetch(request)
+            .then((response) => {
+                return response.json()
+            }).then((response) => {
+                certificado = response.data;
+                console.log('certificado Seleccionada:', response.data);
+            }).then((response) => {
+                request = new Request('http://proyecto-final-prim.herokuapp.com/productores/' + certificado.ingreso.productor , {
+                    method: 'Get',
+                    headers: new Headers({
+                        'Content-Type': 'application/json'
+                    })
+                });
+
+                fetch(request)
+                    .then((response) => {
+                        return response.json()
+                    })
+                    .then((response) => {
+                        productor = response.data;
+                        console.log('productor Seleccionado:', response.data);
+                    })
+                    .then((response) => {
+                    console.log('productor.cuil', productor.cuil);
+
+                    this.state.allEspeciesEntities.forEach(function (esp) {
+                        if (esp['_id'] === certificado.ingreso.especie) {
+                            especie = esp;
+                        }
+                    });
+
+                    this.state.allCosechasEntities.forEach(function (cos) {
+                        if (cos['_id'] === certificado.ingreso.cosecha) {
+                            cosecha = cos;
+                        }
+                    });
+
+                    this.state.allCamposEntities.forEach(function (cam) {
+                        if (cam['_id'] === certificado.ingreso.procedencia) {
+                            procedencia = cam;
+                        }
+                    });
+
+                    console.log('certificado.ingreso.calidad', certificado.ingreso.calidad);
+                    console.log('certificado.ingreso.["kgs_merma_volatil"]', certificado.ingreso["kgs_merma_volatil"]);
+                    console.log('certificado.ingreso.["porc_volatil"]', certificado.ingreso["porc_volatil"]);
+
+                    this.setState({
+                        'currentLiquidacion': this.state.items[index],
+                        'certificadoSeleccionado': certificado,
+                        'C.T.G nro': certificado.ingreso.ctg,
+                        'CEE': certificado.ingreso.cee,
+                        'currentProductorCuil': productor.cuil,
+                        'currentEspecieDesc': especie.descripcion,
+                        'currentCosechaDesc': cosecha.descripcion,
+                        'currentCalidad': certificado.ingreso.calidad,
+                        'currentCampoNombre': procedencia.nombre,
+                        'Bruto': certificado.ingreso['kg_bruto'],
+                        'PesoNeto' :certificado.ingreso['kg_neto'],
+                        'Tara': certificado.ingreso['kg_tara'],
+                        'Neto Final': certificado.ingreso['kgs_neto_final'],
+                        'currentMermaHumedad': certificado.ingreso["porc_merma_humedad"],
+                        'Kgs. Humedad': certificado.ingreso["kgs_merma_humedad"],
+                        'Kgs. Zarandeo': certificado.ingreso["kgs_merma_zarandeo"],
+                        'Kgs. Volátil': certificado.ingreso["kgs_merma_volatil"],
+                        '% Humedad':  certificado.ingreso["porc_humedad"],
+                        '% Zarandeo': certificado.ingreso["porc_zarandeo"],
+                        '% Volátil': certificado.ingreso["porc_volatil"]
+
+                    });
+                });
+        });
+
+    },
+
     round: function (value, exp) {
         if (typeof exp === 'undefined' || +exp === 0)
             return Math.round(value);
@@ -529,8 +688,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
         value = value.toString().split('e');
         return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
     },
-
-
+    
     render() {
         return (
             <div style={{
@@ -541,16 +699,88 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 <Tabs
                     onChange={this.handleChange}
                     value={this.state.slideIndex}
-                    >
-                    <Tab label="Remitente" value={0} />
-                    <Tab label="Granos" value={1} />
-                    <Tab label="Transporte" value={2} />
-                    <Tab label="Destinatario" value={3} />
+                >
+                    <Tab label="Liquidacion" value={0} />
+                    <Tab label="Remitente" value={1} />
+                    <Tab label="Granos" value={2} />
+                    <Tab label="Transporte" value={3} />
+                    <Tab label="Destinatario" value={4} />
                 </Tabs>
                 <SwipeableViews
                     index={this.state.slideIndex}
                     onChangeIndex={this.handleChange}
-                    >
+                >
+                    <div>
+                        <div>
+                            <Paper zDepth={3} style={{padding: '20px'}}>
+                                <h1>Liquidación</h1>
+                                <p>Seleccione de la tabla la Liquidación para la cual se va a generar el Egreso. </p>
+                                <p>Si conoce el número de la Liquidación/Orden buscada, puede ingresarlo en el campo siguiente para facilitar la búsqueda. </p>
+                                <div>
+                                    <TextField
+                                        style={{display:'inline-block', marginRight:'15px', left:'0px'}}
+                                        floatingLabelStyle={{lineHeight:'10px'}}
+                                        hintStyle={{bottom:'7px'}}
+                                        underlineStyle={{width:'100%'}}
+                                        hintText='Nro. de Liquidación'
+                                        floatingLabelText='Nro. de Liquidación'
+                                        id='nroLiquidacion'
+                                        ref='nroLiquidacion'
+                                        value= {this.state['nroLiquidacion']}
+                                        onChange={this.handleControlledInputChange}
+                                        onBlur={this.handleControlledInputChange}
+                                    />
+                                    <br/>
+                                    <br/>
+                                    <br/>
+                                    <br/>
+                                    <br/>
+                                    <Table
+                                        height={'280px'}
+                                        fixedHeader= {true}
+                                        fixedFooter= {true}
+                                        selectable={true}
+                                        multiSelectable= {false}
+                                        onRowSelection={this.handleRowSelection}
+                                    >
+                                        <TableHeader
+                                            displaySelectAll= {false}
+                                            adjustForCheckbox={true}
+                                            enableSelectAll= {false}
+                                        >
+                                            <TableRow>
+                                                <TableHeaderColumn colSpan="7" tooltip="" style={{textAlign: 'left', paddingLeft:'0px'}}>
+
+                                                </TableHeaderColumn>
+                                            </TableRow>
+                                            <TableRow>
+                                                <TableHeaderColumn tooltip="Nro. Orden">Nro. Orden</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Nro. Certificado">Nro. Certificado</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Puerto">Puerto</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Localidad">Localidad</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="KG Netos">KG Netos</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Calidad">Calidad</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Precio de Venta">Precio de Venta</TableHeaderColumn>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody
+                                            displayRowCheckbox= {true}
+                                            showRowHover= {true}
+                                            stripedRows= {false}
+                                            deselectOnClickaway={false}
+                                        >
+                                            {this.renderVentasRows()}
+                                        </TableBody>
+                                        <TableFooter
+                                            adjustForCheckbox={this.state.showCheckboxes}
+                                        >
+                                        </TableFooter>
+                                    </Table>
+                                </div>
+
+                            </Paper>
+                        </div>
+                    </div>
                     <div>
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
@@ -596,15 +826,9 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                 </div>
                                 <br/>
                                 <div style={{width:'100%'}}>
-                                    <DatePicker
-                                        floatingLabelText= 'Fecha emisión'
-                                        style={styles.datePicker}
-                                        hintText='Fecha emisión'
-                                        mode="landscape"
-                                        ref='Fecha emision'
-                                        onChange={this.formatDate.bind(this, 'Fecha emision')} />
+                                    <DatePicker style={styles.datePicker} hintText='Fecha emisión' mode="landscape" ref='Fecha emision' onChange={this.formatDate.bind(this, 'Fecha emision')} />
 
-                                    <DatePicker floatingLabelText= 'Fecha arribo' style={styles.datePicker} hintText='Fecha de arribo' mode="landscape" ref='Fecha arribo' onChange={this.formatDate.bind(this, 'Fecha arribo')} />
+                                    <DatePicker style={styles.datePicker} hintText='Fecha de arribo' mode="landscape" ref='Fecha arribo' onChange={this.formatDate.bind(this, 'Fecha arribo')} />
                                     <br />
                                     <SelectField
                                         style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
@@ -627,7 +851,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                         value= {this.state['CEE']}
                                         onChange={this.handleControlledInputChange}
                                     />
-                                    <DatePicker floatingLabelText= 'Fecha vencimiento' style={styles.datePicker} hintText='Fecha vencimiento' mode="landscape" ref='Fecha vencimiento' onChange={this.formatDate.bind(this, 'Fecha vencimiento')}  />
+                                    <DatePicker style={styles.datePicker} hintText='Fecha vencimiento' mode="landscape" ref='Fecha vencimiento' onChange={this.formatDate.bind(this, 'Fecha vencimiento')}  />
                                     <br />
                                     <SelectField
                                         style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
@@ -636,7 +860,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                         ref='RemitenteComercial'
                                         value={this.getControlledSelectFieldValue('RemitenteComercial')}
                                         onChange={this.handleControlledSelectFieldValueChange.bind(this,'RemitenteComercial')}
-                                        >
+                                    >
                                         {this.renderSelectFieldsValues('RemitenteComercial')}
                                     </SelectField>
                                     <br />
@@ -647,7 +871,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                         ref='Intermediario'
                                         value={this.getControlledSelectFieldValue('Intermediario')}
                                         onChange={this.handleControlledSelectFieldValueChange.bind(this,'Intermediario')}
-                                        >
+                                    >
                                         {this.renderSelectFieldsValues('Intermediario')}
                                     </SelectField>
                                 </div>
@@ -888,7 +1112,6 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                         onChange={this.handleControlledInputChange}
                                     />
                                     <Toggle
-
                                         style={{marginBottom: '16',marginTop: '26px'}}
                                         labelStyle={{width:'auto', marginRight:'142px'}}
                                         label= "Flete pago"
@@ -991,8 +1214,9 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                     label="Aceptar"
                                     onTouchTap={this.handleAceptar}
                                 />
+
                                 <Dialog
-                                    title="Se esta por dar de alta una nueva carta de porte."
+                                    title="Se está por dar de alta una nueva carta de porte correspondiente a un egreso de cereal."
                                     actions={[
                                                 <FlatButton
                                                     label="Cancelar"
@@ -1009,11 +1233,18 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                     modal={false}
                                     open={this.state.altaConfirmationModal}
                                 >
-                                    {'Esta seguro que los datos correspondientes a la nueva carta de porte son correctos?'}
+                                    {'¿Está seguro que los datos correspondientes a la nueva carta de porte son correctos?'}
                                 </Dialog>
                                 <Dialog
-                                    title={"La nueva carta de porte fue ingresada a la base de datos con exito"}
+                                    title={"La nueva carta de porte fue ingresada a la base de datos con éxito"}
                                     actions={[
+                                               <a target="_blank" href={'http://proyecto-final-prim.herokuapp.com/egresoCereal/pdf/' + this.state.newEgresoId}>
+                                                    <FlatButton
+                                                        label="Ver PDF"
+                                                        primary={true}
+                                                        disabled={false}
+                                                    />
+                                                </a>,
                                                 <FlatButton
                                                     label="OK"
                                                     primary={true}
@@ -1024,13 +1255,13 @@ var IngresoDeCerealMainTabs = React.createClass ({
                                     modal={false}
                                     open={this.state.altaCPModal}
                                 >
-                                    {'Sera redireccionado a la pagina de inicio de ingreso de cereal.'}
+                                    {'Para ver el pdf correspondiente al nuevo egreso seleccione la opción "Ver PDF".\n Al seleccionar "OK", será redireccionado a la página de inicio de egreso de cereal.'}
                                 </Dialog>
                             </Paper>
                         </div>
                     </div>
                     <Dialog
-                        title={"Faltan campos por completar!!"}
+                        title={"Faltan campos por completar!"}
                         actions={[
 
                                                 <FlatButton
@@ -1048,6 +1279,47 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 </SwipeableViews>
             </div>
         );
+    },
+
+    renderVentasRows: function () {
+        var items = this.state.items;
+
+        if (items) {
+            return (items.map(this.renderVentasRow))
+        }
+    },
+    renderVentasRow: function (row, index) {
+        var puertoNombre = '';
+        var puertoLocalidad = '';
+        var certificadoNumero = '';
+        var certificadoKGNetos = '';
+        var certificadoCalidad = '';
+
+        this.state.allPuertosEntities.forEach(function (p) {
+            if (p['_id'] === row.puerto) {
+                puertoNombre = p.nombre;
+                puertoLocalidad = p.localidad;
+            }
+        });
+        this.state.allCertificadosEntities.forEach(function (c) {
+            if (c['_id'] === row.certificado) {
+                certificadoNumero = c.numero;
+                certificadoKGNetos = c['ingreso']['kg_neto'];
+                certificadoCalidad = c['ingreso']['calidad'];
+            }
+        });
+
+        return(
+            <TableRow key={index} selected={row.selected} >
+                <TableRowColumn>{row['nro_orden']}</TableRowColumn>
+                <TableRowColumn>{certificadoNumero}</TableRowColumn>
+                <TableRowColumn>{puertoNombre}</TableRowColumn>
+                <TableRowColumn>{puertoLocalidad}</TableRowColumn>
+                <TableRowColumn>{certificadoKGNetos}</TableRowColumn>
+                <TableRowColumn>{certificadoCalidad}</TableRowColumn>
+                <TableRowColumn>{row['precio_venta']}</TableRowColumn>
+            </TableRow>
+        )
     },
 
     //MISSING FIELDS
@@ -1072,8 +1344,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
     handleCloseFieldsMissingModal: function () {
         this.setState({fieldsMissingModal: false});
     },
-    
-    
+
     handleAceptar: function () {
         var keys = (Object.keys(this.refs));
         var values = keys.map(this.getRefsValues);
@@ -1083,12 +1354,46 @@ var IngresoDeCerealMainTabs = React.createClass ({
             object[key] = values[index]
         });
 
-        if (_.includes(values, undefined, 0)) {
+        //if (_.includes(values, undefined, 0)) {
+        if (
+            this.state['nroCP'] === '' ||
+            this.state['Fecha emision'] === '' ||
+            this.state['C.T.G nro'] === '' ||
+            this.state['fleteCorto'] === '' ||
+            this.state['Fecha arribo'] === '' ||
+            this.state['currentProductorCuil'] === '' ||
+            this.state['CEE'] === '' ||
+            this.state['Fecha vencimiento'] === '' ||
+            this.state['currentRemitenteComercial'] === '' ||
+            this.state['currentIntermediario'] === '' ||
+            this.state['currentEspecieDesc'] === '' ||
+            this.state['currentCosechaDesc'] === '' ||
+            this.state['currentCalidad'] === '' ||
+            this.state['currentCampoNombre'] === '' ||
+            this.state['Bruto'] === '' ||
+            this.state['Tara'] === '' ||
+            this.state['PesoNeto'] === '' ||
+            this.state['% Humedad'] === '' ||
+            this.state['currentMermaHumedad'] === '' ||
+            this.state['% Zarandeo'] === '' ||
+            this.state['% Volátil'] === '' ||
+            this.state['Kgs. Humedad'] === '' ||
+            this.state['Kgs. Zarandeo'] === '' ||
+            this.state['Kgs. Volátil'] === '' ||
+            this.state['Neto Final'] === '' ||
+            this.state['currentChoferCuil'] === '' ||
+            this.state['currentTransportistaRazonSocial'] === '' ||
+            this.state['Patente'] === '' ||
+            this.state['Kms. recorridos'] === '' ||
+            this.state['currentDestinatario'] === '' ||
+            this.state['currentDestinoDesc'] === ''
+        ) {
             this.handleOpenFieldsMissingModal();
 
         } else {
             this.handleOpenAltaConfirmationModal();
         }
+
         //this.handleOpenAltaConfirmationModal();
     },
     handleOpenAltaConfirmationModal: function (event) {
@@ -1105,13 +1410,11 @@ var IngresoDeCerealMainTabs = React.createClass ({
         this.setState({altaCPModal: true});
     },
     handleCloseAltaCPModal: function () {
+
+
         this.setState({altaCPModal: false});
-        browserHistory.push('ingresodecereal');
+        browserHistory.push('egresodecereal');
     },
-    
-
-
-
 
     handleChange: function (value) {
         this.setState({
@@ -1119,8 +1422,9 @@ var IngresoDeCerealMainTabs = React.createClass ({
         });
     },
 
-
     makeRequest: function () {
+
+        var newEgresoId = '';
 
         var currentProductorCuil = this.state.currentProductorCuil;
         var currentDestinatarioCuil = this.state.currentDestinatario;
@@ -1129,6 +1433,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
         var currentDestinoDesc = this.state.currentDestinoDesc;
         var currentChoferCuil = this.state.currentChoferCuil;
         var currentTransportista = this.state.currentTransportistaRazonSocial;
+        var currentTarifa = this.state.currentTarifaDesc;
         var currentEspecie = this.state.currentEspecieDesc;
         var currentCosecha = this.state.currentCosechaDesc;
         var currentProcedencia = this.state.currentCampoNombre;
@@ -1140,6 +1445,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
         var destinoSeleccionado = '';
         var choferSeleccionado ='';
         var transportistaSeleccionado = '';
+        var tarifaSeleccionada = '';
         var especieSeleccionada = '';
         var cosechaSeleccionada = '';
         var procedenciaSeleccionada = '';
@@ -1173,7 +1479,11 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 transportistaSeleccionado = transportista['_id'];
             }
         });
-
+        this.state.allTarifasEntities.forEach(function (tarifa) {
+            if (tarifa['descripcion'] === currentTarifa) {
+                tarifaSeleccionada = tarifa['_id'];
+            }
+        });
         this.state.allEspeciesEntities.forEach(function (especie) {
             if (especie['descripcion'] === currentEspecie) {
                 especieSeleccionada = especie['_id'];
@@ -1190,6 +1500,7 @@ var IngresoDeCerealMainTabs = React.createClass ({
             }
         });
 
+        console.log('this.state.currentLiquidacion[id)', this.state.currentLiquidacion['_id']);
 
         var bodyRequested = {
             "nro_cp": this.state['nroCP'],
@@ -1204,35 +1515,38 @@ var IngresoDeCerealMainTabs = React.createClass ({
             "intermediario": intermediarioSeleccionado,
 
 
-             "especie" : especieSeleccionada,
-             "cosecha" : cosechaSeleccionada,
-             "calidad" : this.state['currentCalidad'],
-             "procedencia" : procedenciaSeleccionada,
-             "kg_bruto" : this.state['Bruto'],
-             "kg_tara" : this.state['Tara'],
-             "kg_neto" : this.state['PesoNeto'],
-             "porc_humedad" : this.state['% Humedad'],
-             "porc_merma_humedad": currentMermaHumedad,
-             "porc_zarandeo" : this.state['% Zarandeo'],
-             "porc_volatil" : this.state['% Volátil'],
-             "kgs_merma_humedad": this.state['Kgs. Humedad'],
-             "kgs_merma_zarandeo": this.state['Kgs. Zarandeo'],
-             "kgs_merma_volatil": this.state['Kgs. Volátil'],
-             "kgs_neto_final": this.state['Neto Final'],
+            "especie": especieSeleccionada,
+            "cosecha": cosechaSeleccionada,
+            "calidad": this.state['currentCalidad'],
+            "procedencia": procedenciaSeleccionada,
+            "kg_bruto": this.state['Bruto'],
+            "kg_tara": this.state['Tara'],
+            "kg_neto": this.state['PesoNeto'],
+            "porc_humedad": this.state['% Humedad'],
+            "porc_merma_humedad": currentMermaHumedad,
+            "porc_zarandeo": this.state['% Zarandeo'],
+            "porc_volatil": this.state['% Volátil'],
+            "kgs_merma_humedad": this.state['Kgs. Humedad'],
+            "kgs_merma_zarandeo": this.state['Kgs. Zarandeo'],
+            "kgs_merma_volatil": this.state['Kgs. Volátil'],
+            "kgs_neto_final": this.state['Neto Final'],
 
-             "chofer" : choferSeleccionado,
-             "transportista" : transportistaSeleccionado,
-             "patente" : this.state['Patente'],
-             "flete_pago" : this.state.fletePago,
-             "tipo_tarifa" : '58f9315be1a9d5001185400e',
-             "kms_recorridos" : this.state['Kms. recorridos'],
-             "tarifa" : this.calculateTarifaTotal(),
+            "chofer": choferSeleccionado,
+            "transportista": transportistaSeleccionado,
+            "patente": this.state['Patente'],
+            "flete_pago": this.state.fletePago,
+
+            "kms_recorridos": this.state['Kms. recorridos'],
+            "tarifa": this.calculateTarifaTotal(),
 
 
             "destinatario": destinatarioSeleccionado,
             "destino": destinoSeleccionado,
             "observaciones": this.state['Observaciones'],
-            "habilitado": true
+            "habilitado": true,
+
+            "liquidacion": this.state.currentLiquidacion['_id']
+
         };
 
         fetch(this.getRequest(bodyRequested))
@@ -1240,17 +1554,37 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                console.log('respuesta: ', response);
-                /*this.setState({
-                    items: response.data
-                });*/
+                newEgresoId = response.data['_id'];
+                this.setState({
+                    'newEgresoId': response.data['_id']
+                });
+            })
+            .then((response) => {
+                var ventaEntregadoJson = JSON.stringify({"entregado": true});
+
+                var ingresoRequest = new Request('http://proyecto-final-prim.herokuapp.com/liquidacion/update/' + this.state.currentLiquidacion['_id'], {
+                    method: 'PUT',
+                    headers: new Headers({
+                        'Content-Type': 'application/json'
+                    }),
+                    body: ventaEntregadoJson
+                });
+
+                fetch(ingresoRequest)
+                    .then((response) => {
+                        return response.json()
+                    })
+                    .then((response) => {
+                        console.log('salio bien');
+                        console.log('repsonse: ', response);
+                    })
             })
     },
 
     getRequest: function (bodyRequested) {
         var bodyJson = JSON.stringify(bodyRequested);
-
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/ingresoCereal/create', {
+        console.log('bodyJson:', bodyJson);
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/egresoCereal/create', {
             method: 'POST',
             headers: new Headers({
                 'Content-Type': 'application/json'
@@ -1260,9 +1594,6 @@ var IngresoDeCerealMainTabs = React.createClass ({
 
         return request
     },
-
-
-
 
     getAllProductores: function () {
         var request = new Request('http://proyecto-final-prim.herokuapp.com/productores/getAll', {
@@ -1453,6 +1784,50 @@ var IngresoDeCerealMainTabs = React.createClass ({
                 });
             })
     },
+
+    getAllPuertos: function () {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/puertos/getAll', {
+            method: 'GET',
+            headers: new Headers({
+                'Content-Type': 'text/plain'
+            })
+        });
+
+        fetch(request)
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                this.setState({
+                    allPuertosEntities: response.data,
+                    puertosNombres: response.data.map(function (puerto) {
+                        return puerto['nombre']
+                    })
+                });
+
+            })
+    },
+    getAllCertificados: function () {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/getAll', {
+            method: 'GET',
+            headers: new Headers({
+                'Content-Type': 'text/plain'
+            })
+        });
+
+        fetch(request)
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                this.setState({
+                    allCertificadosEntities: response.data,
+                    certificadosNumero: response.data.map(function (certificado) {
+                        return certificado['numero']
+                    })
+                });
+            })
+    },
 });
 
-export default IngresoDeCerealMainTabs;
+export default EgresoDeCerealMainTabs;

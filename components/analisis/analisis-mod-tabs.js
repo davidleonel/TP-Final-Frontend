@@ -1,5 +1,6 @@
 import React from 'react';
 
+import {browserHistory} from 'react-router';
 import {Tabs, Tab} from 'material-ui/Tabs';
 import SwipeableViews from 'react-swipeable-views';
 import TextField from 'material-ui/TextField';
@@ -110,28 +111,28 @@ var AnalisisModTabs = React.createClass ({
             cosechasDesc: [],
             camposNombres: [],
             choferesCuil: [],
-            transportistasRazonSocial:[],
-            tarifasDesc:[],
-            destinosDesc:[],
+            transportistasRazonSocial: [],
+            tarifasDesc: [],
+            destinosDesc: [],
             calidades: ['Conforme', 'Condicional'],
 
 
             allRubrosEntities: [],
             allChoferesEntities: [],
-            rubrosDesc:'',
+            rubrosDesc: '',
 
-            currentProductorCuil:'',
-            currentEspecieDesc:'',
-            currentCosechaDesc:'',
-            currentCalidad:'',
-            currentCampoNombre:'',
-            currentChoferCuil:'',
-            currentTransportistaRazonSocial:'',
-            currentTarifaDesc:'',
-            currentDestinatario:'',
-            currentDestinoDesc:'',
-            currentRemitenteComercial:'',
-            currentIntermediario:'',
+            currentProductorCuil: '',
+            currentEspecieDesc: '',
+            currentCosechaDesc: '',
+            currentCalidad: '',
+            currentCampoNombre: '',
+            currentChoferCuil: '',
+            currentTransportistaRazonSocial: '',
+            currentTarifaDesc: '',
+            currentDestinatario: '',
+            currentDestinoDesc: '',
+            currentRemitenteComercial: '',
+            currentIntermediario: '',
 
 
             Porcentaje0: 0,
@@ -155,22 +156,13 @@ var AnalisisModTabs = React.createClass ({
             bonificacionReset: true,
             Grado: 0,
             Factor: 0,
+
+            selectedRowsArray: [],
+            fieldsMissingModal: false,
         }
 
     },
-    /* componentDidUpdate: function (nextProps, nextState) {
-     if (this.state.cps != nextState.cps){
-     this.handleRowSelection();
-     }
 
-     if (this.state.selectedRowsArray != nextState.selectedRowsArray){
-     this.handleRowSelection();
-     }
-
-     if (this.state.currentSelectedRows != nextState.currentSelectedRows){
-     this.handleRowSelection();
-     }
-     },*/
     componentDidMount: function() {
         this.getAllProductores();
         this.getAllEspecies();
@@ -279,12 +271,25 @@ var AnalisisModTabs = React.createClass ({
 
     },
 
+    //MENEJO DE ERRORES
+    handleControlledInputBlur: function (event) {
+        if (event.target.value === '') {
+            this.setState({
+                [event.target.id + 'error']: 'Este campo es requerido.'
+            });
+        }  else {
+            this.setState({
+                [event.target.id + 'error']: false
+            });
+        }
+
+    },
 
 
     render() {
         return (
             <div style={{
-                    margin: '20px 0 70px 0',
+                    marginTop: '20px',
                     justifyContent: 'center',
                     alignItems:'center'
                     }}>
@@ -302,8 +307,15 @@ var AnalisisModTabs = React.createClass ({
                     <div>
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
+                                <h1>Ingreso de datos del analisis</h1>
+                                <p>Modifique los datos correspondientes al analisis.
+                                    Luego, ingrese el porcentaje para cada rubro de la especie seleccionada para calcular la bonificacion/rebaja.    </p>
+                                <p>Para dar de baja el ingreso seleccionado, utilice el boton rojo. </p>
+
                                 <div style={{display: 'inline-block', padding: '0 0 10px 10px', width:'100%'}}>
                                     <TextField
+                                        errorText={this.state['nroAnalisis' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
                                         style={{display: 'inline-block', verticalAlign: 'top', width: '30%', marginRight:'25px'}}
                                         hintText= 'Nro. de analisis'
                                         floatingLabelText= 'Nro. de analisis'
@@ -346,41 +358,58 @@ var AnalisisModTabs = React.createClass ({
                                             {this.renderSelectFieldsValues('Cosecha')}
                                         </SelectField>
                                     </div>
-                                    <div style={{display: 'inline-block', width: '20%', float:'right', textAlign:'right', marginRight:'10px', marginTop:'-65px'}}>
+                                    <div style={{display: 'inline-block', width: '20%', float:'right', textAlign:'right', marginRight:'15px', marginTop:'-185px'}}>
                                         <RaisedButton
                                             label="Dar de baja"
                                             labelPosition="before"
                                             primary={true}
                                             icon={<DeleteIcon style={{paddingBottom: '6px'}} />}
                                             style={styles.button}
+                                            backgroundColor="#D21313"
+                                            buttonStyle={{backgroundColor:"#D21313"}}
                                             onTouchTap={this.handleDarDeBaja}
                                         />
                                         <Dialog
                                             title="Se estan por dar de baja registros."
                                             actions={[
-                                        <FlatButton
-                                            label="Cancelar"
-                                            primary={true}
-                                            onTouchTap={this.handleCloseDeleteConfirmationModal}
-                                        />,
-                                        <FlatButton
-                                            label="Aceptar"
-                                            primary={true}
-                                            disabled={false}
-                                            onTouchTap={this.handleDeleteConfirmation}
-                                        />
-                                    ]}
+                                                <FlatButton
+                                                    label="Cancelar"
+                                                    primary={true}
+                                                    onTouchTap={this.handleCloseDeleteConfirmationModal}
+                                                />,
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleDeleteConfirmation}
+                                                />
+                                            ]}
                                             modal={false}
                                             open={this.state.deleteConfirmationModal}
                                         >
-                                            {'Esta seguro que quiere dar de baja la carta de porte: ' + this.state['CP nro.'] + '?'}
+                                            {'Esta seguro que quiere dar de baja el analisis: ' + this.state['nroAnalisis'] + '?'}
+                                        </Dialog>
+                                        <Dialog
+                                            title={"Analisis Nro: " + this.state['nroAnalisis'] + ", dado de baja con exito"}
+                                            actions={[
+                                                <FlatButton
+                                                    label="OK"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseIngresoDadoDeBajaModal}
+                                                />
+                                            ]}
+                                            modal={false}
+                                            open={this.state.analisisDadoDeBaja}
+                                        >
+                                            {'Sera redireccionado a la pagina de inicio de analisis de cereal.'}
                                         </Dialog>
                                     </div>
                                 </div>
-                                <div style={{display: 'inline-block', padding: '0 0 10px 10px', width:'60%', display:'inline-block'}}>
-                                    <DatePicker style={styles.datePicker} hintText='Fecha analisis' mode="landscape" ref='Fecha analisis' onChange={this.formatDate.bind(this, 'Fecha analisis')}  />
-                                    <br/>
+                                <div style={{padding: '0 0 10px 10px', width:'60%', display:'inline-block'}}>
                                     <TextField
+                                        errorText={this.state['Costo' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
                                         style={{display: 'inline-block', verticalAlign: 'top', width: '256px'}}
                                         hintText= 'Costo'
                                         floatingLabelText= 'Costo'
@@ -392,7 +421,7 @@ var AnalisisModTabs = React.createClass ({
                                 </div>
 
 
-                                <div style={{paddingLeft:'15px', width:'200px', border: 'solid black 1px', display:'inline-block', marginLeft:'20%', marginTop:'-14px'}}>
+                                <div style={{paddingLeft:'15px', width:'200px', border: 'solid black 1px', display:'inline-block', marginLeft:'20%', marginTop:'-80px'}}>
                                     <TextField
                                         disabled={true}
                                         style={{display: 'inline-block', verticalAlign: 'top', width: '90%', cursor:'default'}}
@@ -400,7 +429,7 @@ var AnalisisModTabs = React.createClass ({
                                         floatingLabelText= 'Factor'
                                         id='Factor'
                                         ref='Factor'
-                                        value= {this.state['Factor']}
+                                        value= {this.round(this.state['Factor'], 2)}
                                         onChange={this.handleControlledInputChange}
                                     />
                                     <br/>
@@ -411,14 +440,13 @@ var AnalisisModTabs = React.createClass ({
                                         floatingLabelText= 'Grado'
                                         id='Grado'
                                         ref='Grado'
-                                        value= {this.state['Grado']}
+                                        value= {this.round(this.state['Grado'], 2)}
                                         onChange={this.handleControlledInputChange}
                                     />
                                 </div>
-                                <br/>
                                 <div>
                                     <Table
-                                        height={this.state.height}
+                                        height={'203px'}
                                         fixedHeader={this.state.fixedHeader}
                                         fixedFooter={this.state.fixedFooter}
                                         selectable={false}
@@ -435,7 +463,7 @@ var AnalisisModTabs = React.createClass ({
                                                 </TableHeaderColumn>
                                             </TableRow>
                                             <TableRow>
-                                                <TableHeaderColumn tooltip="Rubro de Analisis">Rubro de Analisis</TableHeaderColumn>
+                                                <TableHeaderColumn tooltip="Rubro de Análisis">Rubro de Análisis</TableHeaderColumn>
                                                 <TableHeaderColumn tooltip="Porcentaje">Porcentaje</TableHeaderColumn>
                                                 <TableHeaderColumn tooltip="Bonificacion / Rebaja">Bonificacion / Rebaja</TableHeaderColumn>
                                             </TableRow>
@@ -451,10 +479,7 @@ var AnalisisModTabs = React.createClass ({
                                         <TableFooter
                                             adjustForCheckbox={this.state.showCheckboxes}
                                         >
-                                            <TableRow>
-                                                <TableRowColumn colSpan="3" style={{textAlign: 'center'}}>
-                                                </TableRowColumn>
-                                            </TableRow>
+
                                         </TableFooter>
                                     </Table>
                                 </div>
@@ -465,10 +490,13 @@ var AnalisisModTabs = React.createClass ({
 
                     <div>
                         <div>
-                            <Paper zDepth={3} style={{padding: '20px'}}>
+                            <Paper zDepth={3} style={{padding: '20px 20px 0 20px'}}>
+                                <h1>Seleccion de cartas de porte</h1>
+                                <p>Seleccione la/s cartas de porte que incluye el análisis. </p>
                                 <div style={{display: 'inline-block', padding: '0', width:'100%'}}>
                                     <div style={{ width:'40%'}} >
                                         <DatePicker
+                                            floatingLabelText= 'Fecha desde'
                                             style={{display: 'inline-block', width: '45%', marginRight:'5%'}}
                                             textFieldStyle={{width: '100%'}}
                                             autoOk={true}
@@ -480,6 +508,7 @@ var AnalisisModTabs = React.createClass ({
                                             onChange={this.updateFilterFields.bind(this, 'Fecha desde')}
                                         />
                                         <DatePicker
+                                            floatingLabelText= 'Fecha hasta'
                                             style={{display: 'inline-block', width: '45%', float: 'right'}}
                                             textFieldStyle={{width: '100%'}}
                                             autoOk={true}
@@ -490,38 +519,6 @@ var AnalisisModTabs = React.createClass ({
                                             onChange={this.updateFilterFields.bind(this, 'Fecha hasta')}
                                         />
                                     </div>
-                                    <br/>
-                                    <div style={{marginBottom:'25px'}}>
-                                        <SelectField
-                                            labelStyle={styles.selectFieldLabel}
-                                            iconStyle={styles.selectFieldIcon}
-                                            style={{height:'40px', width: '40%', float:'left'}}
-                                            menuStyle={styles.selectFieldMenu}
-                                            floatingLabelStyle={styles.selectFieldHint}
-                                            floatingLabelText='Chofer'
-                                            maxHeight={200}
-                                            ref='Chofer'
-                                            value={this.getControlledSelectFieldValue('Chofer')}
-                                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Chofer')}
-                                        >
-                                            {this.renderSelectFieldsValues('Chofer')}
-                                        </SelectField>
-                                        <SelectField
-                                            labelStyle={styles.selectFieldLabel}
-                                            iconStyle={styles.selectFieldIcon}
-                                            style={{float: 'right', height:'40px', width: '40%', marginRight:'10%'}}
-                                            menuStyle={styles.selectFieldMenu}
-                                            floatingLabelStyle={styles.selectFieldHint}
-                                            floatingLabelText='Productor'
-                                            maxHeight={200}
-                                            ref='Productor'
-                                            value={this.getControlledSelectFieldValue('Productor')}
-                                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Productor')}
-                                        >
-                                            {this.renderSelectFieldsValues('Productor')}
-                                        </SelectField>
-                                    </div>
-                                    <br/>
                                     <br/>
                                     <TextField
                                         style={{marginTop: '-25px'}}
@@ -541,7 +538,7 @@ var AnalisisModTabs = React.createClass ({
                                 <br/>
                                 <div>
                                     <Table
-                                        height={'450px'}
+                                        height={'360px'}
                                         fixedHeader= {true}
                                         fixedFooter= {true}
                                         selectable={true}
@@ -564,7 +561,7 @@ var AnalisisModTabs = React.createClass ({
                                                     />
                                                 </TableHeaderColumn>
                                                 <TableHeaderColumn colSpan="6" tooltip="Seleccione las Cartas de Porte" style={{textAlign: 'right'}}>
-                                                    Seleccione todas las Cartas de Porte correspondientes al analisis.
+                                                    Seleccione todas las Cartas de Porte correspondientes al análisis.
                                                 </TableHeaderColumn>
                                             </TableRow>
                                             <TableRow>
@@ -605,13 +602,266 @@ var AnalisisModTabs = React.createClass ({
                                     </Table>
                                 </div>
 
+
+
+                                <Dialog
+                                    title={"Se esta por modificar el análisis Nro: " + this.state['nroAnalisis']}
+                                    actions={[
+                                                <FlatButton
+                                                    label="Cancelar"
+                                                    primary={true}
+                                                    onTouchTap={this.handleCloseModConfirmationModal}
+                                                />,
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleModConfirmationModal}
+                                                />
+                                            ]}
+                                    modal={false}
+                                    open={this.state.modConfirmationModal}
+                                >
+                                    {"Esta seguro que los datos correspondientes al análisis Nro: " + this.state['nroAnalisis'] + " son correctos?"}
+                                </Dialog>
+                                <Dialog
+                                    title={"El análisis Nro: " + this.state['nroAnalisis'] + " fue ingresado a la base de datos con exito"}
+                                    actions={[
+                                                <FlatButton
+                                                    label="OK"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseModCPModal}
+                                                />
+                                            ]}
+                                    modal={false}
+                                    open={this.state.modAnalisisModal}
+                                >
+                                    {'Sera redireccionado a la pagina de inicio de análisis de cereal.'}
+                                </Dialog>
                             </Paper>
                         </div>
                     </div>
+                    <Dialog
+                        title={"Faltan campos por completar!!"}
+                        actions={[
+
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseFieldsMissingModal}
+                                                />
+                                            ]}
+                        modal={false}
+                        open={this.state.fieldsMissingModal}
+                    >
+                        {"Por favor complete los campos faltates para continuar."}
+                    </Dialog>
                 </SwipeableViews>
             </div>
         )
     },
+
+    getRefsValues: function (key) {
+
+        if (this.refs[key].props.value != null) {
+            return this.refs[key].props.value
+        } else {
+            if(this.refs[key].state != null){
+                if (this.refs[key].state.date != null) {
+                    return this.refs[key].state.date
+                }
+                if (this.refs[key].state.switched != null) {
+                    return this.refs[key].state.switched
+                }
+            }
+        }
+    },
+    handleOpenFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: true});
+    },
+    handleCloseFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: false});
+    },
+
+
+    handleAceptar: function () {
+        var keys = (Object.keys(this.refs));
+        var values = keys.map(this.getRefsValues);
+        var fields = {};
+
+        keys.map(function (key, index) {
+            fields[key] = values[index]
+        });
+
+        values = _.omit(fields, ['Fecha desde', 'Fecha hasta', 'Carta de porte']);
+
+        if (_.includes(_.values(values), undefined, 0)) {
+            this.handleOpenFieldsMissingModal();
+
+        } else {
+            this.handleOpenModConfirmationModal();
+        }
+
+
+        //this.handleOpenModConfirmationModal();
+    },
+    handleOpenModConfirmationModal: function (event) {
+        this.setState({modConfirmationModal: true});
+
+    },
+    handleCloseModConfirmationModal: function () {
+        this.setState({modConfirmationModal: false});
+    },
+
+    handleModConfirmationModal: function () {
+        this.makeAceptarRequest();
+        this.handleCloseModConfirmationModal();
+        this.setState({modAnalisisModal: true});
+    },
+    handleCloseModCPModal: function () {
+        this.setState({modAnalisisModal: false});
+        browserHistory.push('analisis');
+    },
+
+
+
+
+    makeAceptarRequest: function () {
+        var state = this.state;
+        var currentProductorCuil = state.currentProductorCuil;
+        var currentEspecie = state.currentEspecieDesc;
+        var currentCosecha = state.currentCosechaDesc;
+        var productorSelecionado = '';
+        var especieSeleccionada = '';
+        var cosechaSeleccionada = '';
+        var rubrosSeleccionados = [];
+        var cpsSeleccionadas = [];
+
+        this.state.allProductoresEntities.forEach(function (productor) {
+            if (productor['cuil'] === currentProductorCuil) {
+                productorSelecionado = productor['_id'];
+            }
+        });
+        this.state.allEspeciesEntities.forEach(function (especie) {
+            if (especie['descripcion'] === currentEspecie) {
+
+                especie.rubros.forEach(function (rubro, index) {
+                    rubrosSeleccionados.push({"rubro": rubro['rubro'], "porcentaje": state['Porcentaje' + index]});
+                });
+
+                especieSeleccionada = especie['_id'];
+            }
+        });
+        this.state.allCosechasEntities.forEach(function (cosecha) {
+            if (cosecha['descripcion'] === currentCosecha) {
+                cosechaSeleccionada = cosecha['_id'];
+            }
+        });
+
+        for (var i = 0; i < this.state.selectedRowsArray.length; i++) {
+            var cp = this.state.cps[this.state.selectedRowsArray[i]];
+
+            cpsSeleccionadas.push(cp['_id']);
+        }
+
+        var bodyRequested = {
+            "nro_analisis" : this.state['nroAnalisis'],
+            "productor" : productorSelecionado,
+            "especie" : especieSeleccionada,
+            "cosecha" : cosechaSeleccionada,
+            "fecha_analisis" : this.state['Fecha analisis'],
+            "costo_analisis": state['Costo'],
+            "habilitado": true,
+            "rubros" : rubrosSeleccionados,
+            "factor" : this.state['Factor'],
+            "grado" : this.state['Grado']
+        };
+
+        if (cpsSeleccionadas.length >= 1) {
+            bodyRequested["ingresos"] = cpsSeleccionadas
+        }
+
+        fetch(this.getRequest(bodyRequested))
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+                console.log('response:', response);
+            });
+    },
+
+
+    getRequest: function (bodyRequested) {
+        var bodyJson = JSON.stringify(bodyRequested);
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/analisis/update/' + this.props.params.identifier, {
+            method: 'PUT',
+            headers: new Headers({
+                'Content-Type': 'application/json'
+            }),
+            body: bodyJson
+        });
+
+        return request
+    },
+
+
+
+
+
+
+
+
+    handleDarDeBaja: function () {
+        event.preventDefault();
+        this.handleOpenDeleteConfirmationModal();
+    },
+    handleOpenDeleteConfirmationModal: function (event) {
+        this.setState({deleteConfirmationModal: true});
+    },
+    handleDeleteConfirmation: function () {
+        var bodyRequested = {habilitado: false};
+        var bodyJson = JSON.stringify(bodyRequested);
+
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/analisis/update/' + this.props.params.identifier, {
+            method: 'PUT',
+            headers: new Headers({
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }),
+            body: bodyJson
+        });
+
+        fetch(request)
+            .then((response) => {
+                return response.json()
+            })
+            .then((response) => {
+            });
+
+        this.handleCloseDeleteConfirmationModal();
+        this.handleAnalisisDadoDeBajaModal();
+    },
+    handleCloseDeleteConfirmationModal: function () {
+        this.setState({deleteConfirmationModal: false});
+    },
+
+    handleAnalisisDadoDeBajaModal: function () {
+        this.setState({analisisDadoDeBaja: true});
+    },
+    handleCloseIngresoDadoDeBajaModal: function () {
+        this.setState({analisisDadoDeBaja: false});
+
+        browserHistory.push('analisis');
+    },
+
+
+
+
+
+
+
 
     handleLimpiarFiltros: function () {
         this.setState({
@@ -695,7 +945,7 @@ var AnalisisModTabs = React.createClass ({
                         style={{display: 'inline-block', verticalAlign: 'top' , cursor:'default'}}
                         id={'Bonificacion' + index}
                         ref='Bonificacion'
-                        value= {this.state['Bonificacion' + index]}
+                        value= {this.round(this.state['Bonificacion' + index], 2)}
                         onChange={this.handleControlledInputChange}
                         onBlur={this.calculateBonificacion.bind(this, index, row['rubro'])}
                     />
@@ -703,6 +953,26 @@ var AnalisisModTabs = React.createClass ({
             </TableRow>
         )
     },
+
+    round: function (value, exp) {
+        if (typeof exp === 'undefined' || +exp === 0)
+            return Math.round(value);
+
+        value = +value;
+        exp = +exp;
+
+        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0))
+            return NaN;
+
+        // Shift
+        value = value.toString().split('e');
+        value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
+
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
+    },
+    
     calculateBonificacion: function (index, rubroID, event) {
         var currentEspecie = this.state.currentEspecieDesc;
         var especieSeleccionada = '';
@@ -715,9 +985,6 @@ var AnalisisModTabs = React.createClass ({
         var especieID = especieSeleccionada;
         var porcRubro = (event.target) ? event.target.value : event;
         var bonificacionReset = this.state.bonificacionReset;
-/*        console.log('porcRubro' , porcRubro);
-        console.log('bonificacionReset' , bonificacionReset);
-        console.log('[Bonificacion: ' , this.state['Bonificacion' + index]);*/
 
         var request = new Request(
             'http://proyecto-final-prim.herokuapp.com/analisis/agregarRubro/' +
@@ -747,71 +1014,12 @@ var AnalisisModTabs = React.createClass ({
 
     },
 
-    handleAceptar: function () {
-        this.makeAceptarRequest();
-    },
-    makeAceptarRequest: function () {
-        var state = this.state;
-        var currentProductorCuil = state.currentProductorCuil;
-        var currentEspecie = state.currentEspecieDesc;
-        var currentCosecha = state.currentCosechaDesc;
-        var productorSelecionado = '';
-        var especieSeleccionada = '';
-        var cosechaSeleccionada = '';
-        var rubrosSeleccionados = [];
-        var cpsSeleccionadas = [];
 
-        this.state.allProductoresEntities.forEach(function (productor) {
-            if (productor['cuil'] === currentProductorCuil) {
-                productorSelecionado = productor['_id'];
-            }
-        });
-        this.state.allEspeciesEntities.forEach(function (especie) {
-            if (especie['descripcion'] === currentEspecie) {
 
-                especie.rubros.forEach(function (rubro, index) {
-                    rubrosSeleccionados.push({"rubro": rubro['rubro'], "porcentaje": state['Porcentaje' + index]});
-                });
 
-                especieSeleccionada = especie['_id'];
-            }
-        });
-        this.state.allCosechasEntities.forEach(function (cosecha) {
-            if (cosecha['descripcion'] === currentCosecha) {
-                cosechaSeleccionada = cosecha['_id'];
-            }
-        });
 
-        for (var i = 0; i < this.state.selectedRowsArray.length; i++) {
-            var cp = this.state.cps[this.state.selectedRowsArray[i]];
 
-            cpsSeleccionadas.push(cp['_id']);
-        }
 
-        var bodyRequested = {
-            "nro_analisis" : this.state['nroAnalisis'],
-            "productor" : productorSelecionado,
-            "especie" : especieSeleccionada,
-            "cosecha" : cosechaSeleccionada,
-            "fecha_analisis" : this.state['Fecha analisis'],
-            "costo_analisis": state['Costo'],
-            "habilitado": true,
-            "ingresos" : cpsSeleccionadas,
-            "rubros" : rubrosSeleccionados
-        };
-    },
-    getRequest: function (bodyRequested) {
-        var bodyJson = JSON.stringify(bodyRequested);
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/analisis/create', {
-            method: 'POST',
-            headers: new Headers({
-                'Content-Type': 'application/json'
-            }),
-            body: bodyJson
-        });
-
-        return request
-    },
 
 
     getAllProductores: function () {
@@ -901,38 +1109,7 @@ var AnalisisModTabs = React.createClass ({
     },
 
 
-    handleDarDeBaja: function () {
-        event.preventDefault();
-        this.handleOpenDeleteConfirmationModal();
-    },
-    handleDeleteConfirmation: function () {
-        var bodyRequested = {habilitado: false};
-        var bodyJson = JSON.stringify(bodyRequested);
 
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/analisis/update/' + this.props.params.identifier, {
-            method: 'PUT',
-            headers: new Headers({
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }),
-            body: bodyJson
-        });
-
-        fetch(request)
-            .then((response) => {
-                return response.json()
-            })
-            .then((response) => {
-            });
-
-        this.handleCloseDeleteConfirmationModal();
-    },
-    handleOpenDeleteConfirmationModal: function (event) {
-        this.setState({deleteConfirmationModal: true});
-    },
-    handleCloseDeleteConfirmationModal: function () {
-        this.setState({deleteConfirmationModal: false});
-    },
 
 
     //PARA RECUPERAR TODOS LOS DATOS DE LAS CP ELEGIDA
@@ -942,11 +1119,9 @@ var AnalisisModTabs = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                console.log('respuesta: ', response.data);
-                console.log('fecha analisis: ', response.data['fecha_analisis']);
 
                 this.setState({
-                    currentCP: response.data,
+                    currentCP: response.data
                     // fieldsInitialValues: values
                 });
 
@@ -955,13 +1130,13 @@ var AnalisisModTabs = React.createClass ({
                 var analisis = new Date(response.data['fecha_analisis']);
                 analisis.setDate(analisis.getDate() + 1);
 
-
                 response.data.rubros.forEach(function (rubro, index) {
                     this.setState({
                         ['Porcentaje' + index]: rubro['porcentaje']
                     });
 
-                    this.calculateBonificacion(index, rubro.rubro, rubro['porcentaje']);
+                    //MEPA QUE ESTE NO VA
+                    //this.calculateBonificacion(index, rubro.rubro, rubro['porcentaje']);
                 }.bind(this));
 
                 this.setState({
@@ -971,7 +1146,9 @@ var AnalisisModTabs = React.createClass ({
                     currentCosechaDesc: response.data.cosecha['descripcion'],
                     ['Fecha analisis']: analisis,
                     fleteCorto: response.data['flete_corto'],
-                    ['Costo']: response.data['costo_analisis']
+                    ['Costo']: response.data['costo_analisis'],
+                    Factor: response.data['factor'],
+                    Grado: response.data['grado']
                 });
 
 

@@ -1,5 +1,7 @@
 import React from 'react';
 
+import {browserHistory} from 'react-router';
+
 import {Tabs, Tab} from 'material-ui/Tabs';
 import SwipeableViews from 'react-swipeable-views';
 
@@ -97,7 +99,13 @@ var IngresoDeCerealModTabs = React.createClass ({
 
             items: [],
 
-            currentProductorCuil: '',
+            allDestinosEntities: [],
+            allChoferesEntities: [],
+            allTransportistasEntities: [],
+            allTarifasEntities: [],
+            allEspeciesEntities: [],
+            allCosechasEntities: [],
+            allCamposEntities: [],
             productoresCuil: [],
             especiesDesc: [],
             cosechasDesc: [],
@@ -143,6 +151,8 @@ var IngresoDeCerealModTabs = React.createClass ({
             'Kgs. Volátil': 0,
             Total: 0,
             'Neto Final': 0,
+
+            fieldsMissingModal: false,
         }
 
     },
@@ -166,10 +176,30 @@ var IngresoDeCerealModTabs = React.createClass ({
         this.calculateTarifaTotal();
     },
 
+    //MENEJO DE ERRORES
+    handleControlledInputBlur: function (event) {
+        if (event.target.value === '') {
+            this.setState({
+                [event.target.id + 'error']: 'Este campo es requerido.'
+            });
+        }  else {
+            this.setState({
+                [event.target.id + 'error']: false
+            });
+        }
+
+    },
+    
     handleControlledInputChange: function (event) {
         this.setState({
             [event.target.id]: event.target.value
         }, this.calculateGranosBox(event.target.id, event.target.value));
+
+        if (event.target.value === '') {
+            this.setState({
+                [event.target.id + 'error']: 'Este campo es requerido.'
+            });
+        }
     },
 
     calculateGranosBox: function (id, value) {
@@ -360,6 +390,15 @@ var IngresoDeCerealModTabs = React.createClass ({
             });
         }
         if (label === 'Merma Humedad') {
+            this.state.allMermasHumedadEntities.forEach(function (merma) {
+                if (merma['porc_merma_humedad'] === payload) {
+                    this.setState({
+                        '% Humedad': merma['porc_humedad']
+                    });
+                    this.calculateKgsHumedad(merma['porc_humedad']);
+                }
+            }.bind(this));
+
             this.setState({
                 currentMermaHumedad: payload
             });
@@ -440,16 +479,9 @@ var IngresoDeCerealModTabs = React.createClass ({
     },
 
     calculateTarifaTotal: function () {
-
-        if (this.state.currentTarifaTarifa === undefined) {
-            return (
-                this.state.currentTarifaNRO
-            )
-        } else {
-            return (
-                this.state.currentTarifaTarifa  * this.state['currentKMSRecorridos']
-            )
-        }
+        return (
+            this.state['Tarifa de transporte']  * this.state['currentKMSRecorridos']
+        )
     },
 
     formatDate: function (ref, event, date) {
@@ -477,12 +509,31 @@ var IngresoDeCerealModTabs = React.createClass ({
         }
     },
 
+    round: function (value, exp) {
+        if (typeof exp === 'undefined' || +exp === 0)
+            return Math.round(value);
+
+        value = +value;
+        exp = +exp;
+
+        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0))
+            return NaN;
+
+        // Shift
+        value = value.toString().split('e');
+        value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
+
+        // Shift back
+        value = value.toString().split('e');
+        return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
+    },
+
 
 
     render() {
         return (
             <div style={{
-                    margin: '20px 0 70px 0',
+                    marginTop: '20px',
                     justifyContent: 'center',
                     alignItems:'center'
                     }}>
@@ -502,9 +553,13 @@ var IngresoDeCerealModTabs = React.createClass ({
                     <div>
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
-
+                                <h1>Ingreso de datos del remitente</h1>
+                                <p>Modifique los datos correspondientes al remitente del ingreso seleccionado. </p>
+                                <p>Para dar de baja el ingreso seleccionado, utilice el boton rojo al final de esta pestaña. </p>
                                 <div style={{padding: '0 0 10px 10px', border: 'solid black 1px', marginLeft:'-10px'}}>
                                     <TextField
+                                        errorText={this.state['nroCP' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
                                         style={styles.textField}
                                         hintText= 'CP nro.'
                                         floatingLabelText= 'CP nro.'
@@ -517,6 +572,8 @@ var IngresoDeCerealModTabs = React.createClass ({
                                 <br />
                                 <div style={{padding: '0 0 10px 10px', display: 'inline-block', border: 'solid black 1px',float:'right', width:'40%' }}>
                                     <TextField
+                                        errorText={this.state['C.T.G nro' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
                                         style={styles.textField}
                                         hintText= 'C.T.G nro'
                                         floatingLabelText= 'C.T.G'
@@ -539,9 +596,24 @@ var IngresoDeCerealModTabs = React.createClass ({
                                 </div>
                                 <br/>
                                 <div style={{width:'100%'}}>
-                                    <DatePicker style={styles.datePicker} hintText='Fecha emisión' mode="landscape" ref='Fecha emision' onChange={this.formatDate.bind(this, 'Fecha emision')} value={this.state.defaultFechaEmision} />
+                                    <DatePicker
+                                        style={styles.datePicker}
+                                        hintText='Fecha emisión'
+                                        mode="landscape"
+                                        ref='Fecha emision'
+                                        onChange={this.formatDate.bind(this, 'Fecha emision')}
+                                        value={this.state.defaultFechaEmision}
+                                        floatingLabelText= 'Fecha emisión'/>
 
-                                    <DatePicker style={styles.datePicker} hintText='Fecha de arribo' mode="landscape" ref='Fecha arribo' onChange={this.formatDate.bind(this, 'Fecha arribo')} value={this.state.defaultFechaArribo} />
+                                    <DatePicker
+                                        style={styles.datePicker}
+                                        hintText='Fecha de arribo'
+                                        mode="landscape"
+                                        ref='Fecha arribo'
+                                        onChange={this.formatDate.bind(this, 'Fecha arribo')}
+                                        value={this.state.defaultFechaArribo}
+                                        floatingLabelText= 'Fecha arribo'
+                                        />
                                     <br />
                                     <SelectField
                                         style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
@@ -555,6 +627,7 @@ var IngresoDeCerealModTabs = React.createClass ({
                                     </SelectField>
                                     <br />
                                     <TextField
+                                        errorText={this.state['CEE' + 'error']}
                                         style={{verticalAlign: 'top', width:'25%'}}
                                         hintText= 'CEE'
                                         floatingLabelText= 'CEE'
@@ -563,7 +636,15 @@ var IngresoDeCerealModTabs = React.createClass ({
                                         value= {this.state.CEE}
                                         onChange={this.handleControlledInputChange}
                                     />
-                                    <DatePicker style={styles.datePicker} hintText='Fecha vencimiento' mode="landscape" ref='Fecha vencimiento' onChange={this.formatDate.bind(this, 'Fecha vencimiento')} value={this.state.defaultFechaVencimiento} />
+                                    <DatePicker
+                                        style={styles.datePicker}
+                                        hintText='Fecha vencimiento'
+                                        mode="landscape"
+                                        ref='Fecha vencimiento'
+                                        onChange={this.formatDate.bind(this, 'Fecha vencimiento')}
+                                        value={this.state.defaultFechaVencimiento}
+                                        floatingLabelText= 'Fecha vencimiento'
+                                        />
                                     <br />
                                     <SelectField
                                         style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
@@ -593,29 +674,46 @@ var IngresoDeCerealModTabs = React.createClass ({
                                             labelPosition="before"
                                             primary={true}
                                             icon={<DeleteIcon style={{paddingBottom: '6px'}} />}
-                                            style={styles.button}
+                                            backgroundColor="#D21313"
+                                            buttonStyle={{backgroundColor:"#D21313"}}
                                             onTouchTap={this.handleDarDeBaja}
                                         />
                                         <Dialog
                                             title="Se estan por dar de baja registros."
                                             actions={[
-                                        <FlatButton
-                                            label="Cancelar"
-                                            primary={true}
-                                            onTouchTap={this.handleCloseDeleteConfirmationModal}
-                                        />,
-                                        <FlatButton
-                                            label="Aceptar"
-                                            primary={true}
-                                            disabled={false}
-                                            onTouchTap={this.handleDeleteConfirmation}
-                                        />
-                                    ]}
+                                                <FlatButton
+                                                    label="Cancelar"
+                                                    primary={true}
+                                                    onTouchTap={this.handleCloseDeleteConfirmationModal}
+                                                />,
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleDeleteConfirmation}
+                                                />
+                                            ]}
                                             modal={false}
                                             open={this.state.deleteConfirmationModal}
                                         >
-                                            {'Esta seguro que quiere dar de baja la carta de porte: ' + this.state['CP nro.'] + '?'}
+                                            {'Esta seguro que quiere dar de baja la carta de porte: ' + this.state['nroCP'] + '?'}
                                         </Dialog>
+                                        <Dialog
+                                            title={"Ingreso de cereal Nro: " + this.state['nroCP'] + ", dado de baja con exito"}
+                                            actions={[
+                                                <FlatButton
+                                                    label="OK"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseIngresoDadoDeBajaModal}
+                                                />
+                                            ]}
+                                            modal={false}
+                                            open={this.state.ingresoDadoDeBaja}
+                                        >
+                                            {'Sera redireccionado a la pagina de inicio de ingreso de cereal.'}
+                                        </Dialog>
+
                                     </div>
                                 </div>
 
@@ -625,6 +723,8 @@ var IngresoDeCerealModTabs = React.createClass ({
                     <div>
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
+                                <h1>Ingreso de datos de los granos</h1>
+                                <p>Modifique los datos correspondientes a los granos del ingreso seleccinado. </p>
                                 <div style={{padding: '0 0 10px 10px', border: 'solid black 1px'}}>
                                     <SelectField
                                         style={styles.selectField}
@@ -675,6 +775,7 @@ var IngresoDeCerealModTabs = React.createClass ({
                                 <br />
                                 <div style={{padding: '0 0 10px 10px', display: 'inline-block', border: 'solid black 1px', width:'60%' }}>
                                     <TextField
+                                        errorText={this.state['Bruto' + 'error']}
                                         style={{marginRight: '5%', display: 'inline-block', verticalAlign: 'top'}}
                                         hintText= 'Bruto'
                                         floatingLabelText= 'Bruto'
@@ -685,6 +786,7 @@ var IngresoDeCerealModTabs = React.createClass ({
                                         onBlur={this.handleControlledInputChange}
                                     />
                                     <TextField
+                                        errorText={this.state['Tara' + 'error']}
                                         style={{marginRight: '5%', display: 'inline-block', verticalAlign: 'top'}}
                                         hintText= 'Tara'
                                         floatingLabelText= 'Tara'
@@ -699,7 +801,7 @@ var IngresoDeCerealModTabs = React.createClass ({
                                         style={{display: 'inline-block', verticalAlign: 'top', cursor: 'default', marginTop:'25px'}}
                                         id='Neto'
                                         ref='Neto'
-                                        value= {this.state['PesoNeto']}
+                                        value= {this.round(this.state['PesoNeto'], 2)}
                                     />
                                     <br/>
                                     <SelectField
@@ -718,16 +820,16 @@ var IngresoDeCerealModTabs = React.createClass ({
                                         <div style={{margin: '0 0 0 10px'}}>
                                             <p style={{display: 'inline-block', verticalAlign: 'bottom', width:'10%'}}>%</p>
                                             <TextField
-                                                style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
+                                                disabled={true}
+                                                style={{cursor: 'default', display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
                                                 hintText= '% Humedad'
                                                 floatingLabelText= '% Humedad'
                                                 id='% Humedad'
                                                 ref='% Humedad'
                                                 value= {this.state['% Humedad']}
-                                                onChange={this.handleControlledInputChange}
-                                                onBlur={this.handleControlledInputChange}
                                             />
                                             <TextField
+                                                errorText={this.state['% Zarandeo' + 'error']}
                                                 style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
                                                 hintText= '% Zarandeo'
                                                 floatingLabelText= '% Zarandeo'
@@ -738,6 +840,7 @@ var IngresoDeCerealModTabs = React.createClass ({
                                                 onBlur={this.handleControlledInputChange}
                                             />
                                             <TextField
+                                                errorText={this.state['% Volátil' + 'error']}
                                                 style={{display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
                                                 hintText= '% Volátil'
                                                 floatingLabelText= '% Volátil'
@@ -751,47 +854,47 @@ var IngresoDeCerealModTabs = React.createClass ({
                                             <p style={{display: 'inline-block', verticalAlign: 'bottom', width:'10%'}}>Kgs.</p>
                                             <TextField
                                                 disabled={true}
-                                                style={{cursor: 'default', display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
+                                                style={{verticalAlign: 'bottom', cursor: 'default', display: 'inline-block', marginRight:'8px', width:'15%'}}
                                                 id='Kgs. Humedad'
                                                 ref='Kgs. Humedad'
-                                                value= {this.state['Kgs. Humedad']}
+                                                value= {this.round(this.state['Kgs. Humedad'], 2)}
                                             />
                                             <TextField
                                                 disabled={true}
-                                                style={{cursor: 'default', display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
+                                                style={{verticalAlign: 'bottom', cursor: 'default', display: 'inline-block', marginRight:'8px', width:'15%'}}
                                                 id='Kgs. Zarandeo'
                                                 ref='Kgs. Zarandeo'
-                                                value= {this.state['Kgs. Zarandeo']}
+                                                value= {this.round(this.state['Kgs. Zarandeo'], 2)}
                                             />
                                             <TextField
                                                 disabled={true}
-                                                style={{cursor: 'default', display: 'inline-block', marginRight:'8px', verticalAlign: 'top', width:'15%'}}
+                                                style={{verticalAlign: 'bottom', cursor: 'default', display: 'inline-block', marginRight:'8px', width:'15%'}}
                                                 id='Kgs. Volátil'
                                                 ref='Kgs. Volátil'
-                                                value= {this.state['Kgs. Volátil']}
+                                                value= {this.round(this.state['Kgs. Volátil'], 2)}
                                             />
 
                                             <TextField
                                                 disabled={true}
-                                                style={{cursor: 'default', display: 'inline-block', marginLeft:'10px', marginTop:'-24px', verticalAlign: 'top', width:'15%'}}
+                                                style={{verticalAlign: 'bottom', cursor: 'default', display: 'inline-block', marginLeft:'10px', width:'224px'}}
                                                 hintText= 'Total'
                                                 floatingLabelText= 'Total'
                                                 id='Total'
                                                 ref='Total'
-                                                value= {this.state['Total']}
+                                                value= {this.round(this.state['Total'], 2)}
+                                            />
+
+                                            <TextField
+                                                disabled={true}
+                                                style={{cursor: 'default', display: 'inline-block', marginLeft:'80px', verticalAlign: 'top', width: '135px'}}
+                                                hintText= 'Neto Final'
+                                                floatingLabelText= 'Neto Final'
+                                                id='Neto Final'
+                                                ref='Neto Final'
+                                                value= {this.round(this.state['Neto Final'], 2)}
                                             />
                                         </div>
                                     </div>
-                                    <br/>
-                                    <TextField
-                                        disabled={true}
-                                        style={{cursor: 'default', display: 'inline-block', marginLeft:'15px', verticalAlign: 'top'}}
-                                        hintText= 'Neto Final'
-                                        floatingLabelText= 'Neto Final'
-                                        id='Neto Final'
-                                        ref='Neto Final'
-                                        value= {this.state['Neto Final']}
-                                    />
                                 </div>
                                 <br/>
                             </Paper>
@@ -800,6 +903,8 @@ var IngresoDeCerealModTabs = React.createClass ({
                     <div>
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
+                                <h1>Ingreso de datos de transporte</h1>
+                                <p>Modifique los datos correspondientes al transporte del ingreso seleccionado. </p>
                                 <div style={{padding: '0 0 10px 10px', border: 'solid black 1px'}}>
                                     <SelectField
                                         style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
@@ -823,6 +928,8 @@ var IngresoDeCerealModTabs = React.createClass ({
                                         {this.renderSelectFieldsValues('Transportista')}
                                     </SelectField>
                                     <TextField
+                                        errorText={this.state['Patente' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
                                         style={{marginRight:'10px', verticalAlign: 'top', width:'20%'}}
                                         hintText= 'Patente'
                                         floatingLabelText= 'Patente'
@@ -844,18 +951,20 @@ var IngresoDeCerealModTabs = React.createClass ({
                                 </div>
                                 <br />
                                 <div style={{padding: '0 0 10px 10px', border: 'solid black 1px'}}>
-                                    <SelectField
-                                        style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
-                                        floatingLabelText='Tarifa'
-                                        maxHeight={200}
-                                        ref='Tarifa'
-                                        value={this.getControlledSelectFieldValue('Tarifa')}
-                                        onChange={this.handleControlledSelectFieldValueChange.bind(this,'Tarifa')}
-                                    >
-                                        {this.renderSelectFieldsValues('Tarifa')}
-                                    </SelectField>
-
                                     <TextField
+                                        disabled={true}
+                                        errorText={this.state['Tarifa de transporte' + 'error']}
+                                        style={{display: 'inline-block', verticalAlign: 'top', cursor: 'default', width:'350px'}}
+                                        hintText= 'Tarifa de transporte'
+                                        floatingLabelText= 'Tarifa de transporte'
+                                        id= 'Tarifa de transporte'
+                                        ref= 'Tarifa de transporte'
+                                        value= {this.state['Tarifa de transporte']}
+                                    />
+                                    <br/>
+                                    <TextField
+                                        errorText={this.state['Kms. recorridos' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
                                         style={styles.textFieldMain}
                                         hintText= 'Kms. recorridos'
                                         floatingLabelText= 'Kms. recorridos'
@@ -867,12 +976,12 @@ var IngresoDeCerealModTabs = React.createClass ({
                                     <br />
                                     <TextField //monto calculado seguo los kilometros y la tarifa
                                         disabled={true}
-                                        style={styles.textFieldMain}
+                                        style={{display: 'inline-block', verticalAlign: 'top', cursor: 'default', width:'500px'}}
                                         hintText= 'Tarifa Total'
                                         floatingLabelText= 'Tarifa Total'
                                         id= 'Tarifa Total'
                                         ref= 'Tarifa Total'
-                                        value= {this.calculateTarifaTotal()}
+                                        value= {this.round(this.calculateTarifaTotal(), 2)}
                                     />
                                 </div>
                                 <br />
@@ -882,6 +991,8 @@ var IngresoDeCerealModTabs = React.createClass ({
                     <div>
                         <div>
                             <Paper zDepth={3} style={{padding: '20px'}}>
+                                <h1>Ingreso de datos del destinatario</h1>
+                                <p>Modifique los datos correspondientes al destinatario del ingreso seleccionado. </p>
                                 <div style={{padding: '0 0 10px 10px', border: 'solid black 1px'}}>
                                     <SelectField
                                         style={{marginRight:'10px', verticalAlign: 'top', width:'40%'}}
@@ -910,14 +1021,16 @@ var IngresoDeCerealModTabs = React.createClass ({
                                 <br/>
                                 <div style={{padding: '0 0 10px 10px', border: 'solid black 1px'}}>
                                     <TextField
+                                        errorText={this.state['Observaciones' + 'error']}
+                                        onBlur={this.handleControlledInputBlur}
                                         hintText="Observaciones"
                                         floatingLabelText="Observaciones"
                                         multiLine={true}
                                         rows={10}
                                         fullWidth={true}
-                                        id= 'observaciones'
-                                        ref= 'observaciones'
-                                        value= {this.state['observaciones']}
+                                        id= 'Observaciones'
+                                        ref= 'Observaciones'
+                                        value= {this.state['Observaciones']}
                                         onChange={this.handleControlledInputChange}
                                     />
                                 </div>
@@ -928,12 +1041,127 @@ var IngresoDeCerealModTabs = React.createClass ({
                                     label="Aceptar"
                                     onTouchTap={this.handleAceptar}
                                 />
+
+                                <Dialog
+                                    title={"Se esta por modificar la carta de porte Nro: " + this.state['nroCP']}
+                                    actions={[
+                                                <FlatButton
+                                                    label="Cancelar"
+                                                    primary={true}
+                                                    onTouchTap={this.handleCloseModConfirmationModal}
+                                                />,
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleModConfirmationModal}
+                                                />
+                                            ]}
+                                    modal={false}
+                                    open={this.state.modConfirmationModal}
+                                >
+                                    {"Esta seguro que los datos correspondientes a la carta de porte Nro: " + this.state['nroCP'] + " son correctos?"}
+                                </Dialog>
+                                <Dialog
+                                    title={"La  carta de porte Nro: " + this.state['nroCP'] + " fue ingresada a la base de datos con exito"}
+                                    actions={[
+                                                <FlatButton
+                                                    label="OK"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseModCPModal}
+                                                />
+                                            ]}
+                                    modal={false}
+                                    open={this.state.modCPModal}
+                                >
+                                    {'Sera redireccionado a la pagina de inicio de ingreso de cereal.'}
+                                </Dialog>
+
+
                             </Paper>
                         </div>
                     </div>
+                    <Dialog
+                        title={"Faltan campos por completar!!"}
+                        actions={[
+
+                                                <FlatButton
+                                                    label="Aceptar"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseFieldsMissingModal}
+                                                />
+                                            ]}
+                        modal={false}
+                        open={this.state.fieldsMissingModal}
+                    >
+                        {"Por favor complete los campos faltates para continuar."}
+                    </Dialog>
                 </SwipeableViews>
             </div>
         );
+    },
+
+    //MISSING FIELDS
+    getRefsValues: function (key) {
+
+        if (this.refs[key].props.value != null) {
+            return this.refs[key].props.value
+        } else {
+            if(this.refs[key].state != null){
+                if (this.refs[key].state.date != null) {
+                    return this.refs[key].state.date
+                }
+                if (this.refs[key].state.switched != null) {
+                    return this.refs[key].state.switched
+                }
+            }
+        }
+    },
+    handleOpenFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: true});
+    },
+    handleCloseFieldsMissingModal: function () {
+        this.setState({fieldsMissingModal: false});
+    },
+
+    handleAceptar: function () {
+        var keys = (Object.keys(this.refs));
+        var values = keys.map(this.getRefsValues);
+        var object = {};
+
+        keys.map(function (key, index) {
+            object[key] = values[index]
+        });
+
+
+        if (_.includes(values, undefined, 0)) {
+
+            this.handleOpenFieldsMissingModal();
+
+        } else {
+            this.handleOpenModConfirmationModal();
+        }
+
+        //this.handleOpenModConfirmationModal();
+    },
+    handleOpenModConfirmationModal: function (event) {
+        this.setState({modConfirmationModal: true});
+
+    },
+    handleCloseModConfirmationModal: function () {
+        this.setState({modConfirmationModal: false});
+    },
+
+    handleModConfirmationModal: function () {
+        this.makeRequest();
+        this.handleCloseModConfirmationModal();
+        this.setState({modCPModal: true});
+    },
+    handleCloseModCPModal: function () {
+        this.setState({modCPModal: false});
+        browserHistory.push('ingresodecereal');
     },
 
     handleChange: function (value) {
@@ -941,12 +1169,13 @@ var IngresoDeCerealModTabs = React.createClass ({
             slideIndex: value
         });
     },
-    handleAceptar: function () {
-        this.makeRequest();
-    },
+    
     handleDarDeBaja: function () {
         event.preventDefault();
         this.handleOpenDeleteConfirmationModal();
+    },
+    handleOpenDeleteConfirmationModal: function (event) {
+        this.setState({deleteConfirmationModal: true});
     },
     handleDeleteConfirmation: function () {
         var bodyRequested = {habilitado: false};
@@ -970,12 +1199,19 @@ var IngresoDeCerealModTabs = React.createClass ({
             });
 
         this.handleCloseDeleteConfirmationModal();
-    },
-    handleOpenDeleteConfirmationModal: function (event) {
-        this.setState({deleteConfirmationModal: true});
+        this.handleIngresoDadoDeBajaModal();
     },
     handleCloseDeleteConfirmationModal: function () {
         this.setState({deleteConfirmationModal: false});
+    },
+
+    handleIngresoDadoDeBajaModal: function () {
+        this.setState({ingresoDadoDeBaja: true});
+    },
+    handleCloseIngresoDadoDeBajaModal: function () {
+        this.setState({ingresoDadoDeBaja: false});
+
+        browserHistory.push('ingresodecereal');
     },
 
     makeRequest: function () {
@@ -1057,13 +1293,13 @@ var IngresoDeCerealModTabs = React.createClass ({
 
         var bodyRequested = {
             "nro_cp": this.state['nroCP'],
-            "fecha_emision": this.state['Fecha emision'],
-            "ctg": this.state['C.T.G nro'],
+            "fecha_emision": this.state['defaultFechaEmision'],
+            "ctg": this.state['ctgNro'],
             "flete_corto": this.state['fleteCorto'],
-            "fecha_arribo": this.state['Fecha arribo'],
+            "fecha_arribo": this.state['defaultFechaArribo'],
             "productor": productorSelecionado,
             "cee": this.state['CEE'],
-            "fecha_vencimiento": this.state['Fecha vencimiento'],
+            "fecha_vencimiento": this.state['defaultFechaVencimiento'],
             "remitente_comercial": remitenteComercialSeleccionado,
             "intermediario": intermediarioSeleccionado,
 
@@ -1086,10 +1322,10 @@ var IngresoDeCerealModTabs = React.createClass ({
 
             "chofer" : choferSeleccionado,
             "transportista" : transportistaSeleccionado,
-            "patente" : this.state['Patente'],
+            "patente" : this.state['patente'],
             "flete_pago" : this.state.fletePago,
-            "tipo_tarifa" : tarifaSeleccionada,
-            "kms_recorridos" : this.state['Kms. recorridos'],
+            "tipo_tarifa" : '58f9315be1a9d5001185400e',
+            "kms_recorridos" : this.state['currentKMSRecorridos'],
             "tarifa" : this.calculateTarifaTotal(),
 
 
@@ -1098,6 +1334,7 @@ var IngresoDeCerealModTabs = React.createClass ({
             "observaciones": this.state['Observaciones'],
             "habilitado": true
         };
+        console.log('objeto del body:', bodyRequested);
 
         fetch(this.getRequest(bodyRequested))
             .then((response) => {
@@ -1252,7 +1489,7 @@ var IngresoDeCerealModTabs = React.createClass ({
             })
     },
     getAllTarifas: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/tarifas/getAll', {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/tarifas/58f9315be1a9d5001185400e', {
             method: 'GET',
             headers: new Headers({
                 'Content-Type': 'text/plain'
@@ -1264,11 +1501,10 @@ var IngresoDeCerealModTabs = React.createClass ({
                 return response.json()
             })
             .then((response) => {
+                console.log(response.data);
                 this.setState({
-                    allTarifasEntities: response.data,
-                    tarifasDesc: response.data.map(function (tarifa) {
-                        return tarifa['descripcion']
-                    })
+                    'Tarifa de transporte': response.data.tarifa,
+                    currentTarifa: response.data
                 });
             })
     },
@@ -1309,7 +1545,7 @@ var IngresoDeCerealModTabs = React.createClass ({
                 this.setState({
                     allMermasHumedadEntities: response.data,
                     mermasHumedadPorc: response.data.map(function (merma) {
-                        return merma['porc_humedad']
+                        return merma['porc_merma_humedad']
                     })
                 });
             })
@@ -1322,10 +1558,6 @@ var IngresoDeCerealModTabs = React.createClass ({
                 return response.json()
             })
             .then((response) => {
-                //var values = Object.values(response.data);
-                //var keys = Object.keys(response.data);
-                console.log('respuesta: ', response.data);
-                console.log('porc_merma_humedad]: ', response.data['porc_merma_humedad']);
                 this.setState({
                     currentCP: response.data,
                    // fieldsInitialValues: values
@@ -1366,6 +1598,11 @@ var IngresoDeCerealModTabs = React.createClass ({
                     '% Volátil': response.data['porc_volatil'],
                     '% Calidad': response.data['porc_calidad'],
 
+                    'Kgs. Humedad': response.data['kgs_merma_humedad'],
+                    'Kgs. Zarandeo': response.data['kgs_merma_zarandeo'],
+                    'Kgs. Volátil': response.data['kgs_merma_volatil'],
+                    'Neto Final': response.data['kgs_neto_final'],
+
 
                     currentChoferCuil: response.data.chofer['cuil'],
                     currentTransportistaRazonSocial: response.data.transportista['razon_social'],
@@ -1377,7 +1614,7 @@ var IngresoDeCerealModTabs = React.createClass ({
 
                     currentDestinatario: response.data.destinatario['cuil'],
                     currentDestinoDesc: response.data.destino['descripcion'],
-                    observaciones: response.data.observaciones
+                    Observaciones: response.data.observaciones
 
                 });
             })
@@ -1392,7 +1629,6 @@ var IngresoDeCerealModTabs = React.createClass ({
 
         return request
     },
-
 });
 
 export default IngresoDeCerealModTabs;

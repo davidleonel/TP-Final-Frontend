@@ -73,45 +73,14 @@ const styles = {
         width: '30%'
     }
 };
-const tableData = [
-    {
-        name: 'John Smith',
-        status: 'Employed',
-        selected: true
-    },
-    {
-        name: 'Randal White',
-        status: 'Unemployed'
-    },
-    {
-        name: 'Stephanie Sanders',
-        status: 'Employed',
-        selected: true,
-    },
-    {
-        name: 'Steve Brown',
-        status: 'Employed',
-    },
-    {
-        name: 'Joyce Whitten',
-        status: 'Employed',
-    },
-    {
-        name: 'Samuel Roberts',
-        status: 'Employed',
-    },
-    {
-        name: 'Adam Moore',
-        status: 'Employed',
-    },
-];
+
 
 const items = [];
 for (let i = 0; i < 100; i++ ) {
     items.push(<MenuItem value={i} key={i} primaryText={`Item ${i}`} />);
 }
 
-var AnalisisInicio = React.createClass ({
+var VentaInicio = React.createClass ({
     propTypes: {
         handleMainSectionChange: React.PropTypes.func
     },
@@ -143,15 +112,10 @@ var AnalisisInicio = React.createClass ({
             'Carta de porte': '',
 
 
-            currentProductorCuil:'',
-            currentChoferCuil:'',
-
-            productoresCuil: [],
-            especiesDesc: [],
-            cosechasDesc: [],
-            allProductoresEntities: [],
-            allEspeciesEntities: [],
-            allCosechasEntities: []
+            allCertificadosEntities:[],
+            allPuertosEntities:[],
+            certificadosNumero: [],
+            puertosNombres: [],
 
         }
 
@@ -168,9 +132,8 @@ var AnalisisInicio = React.createClass ({
         }
     },
     componentDidMount: function() {
-        this.getAllProductores();
-        this.getAllEspecies();
-        this.getAllCosechas();
+        this.getAllPuertos();
+        this.getAllCertificados();
 
         this.makeRequest();
     },
@@ -186,7 +149,7 @@ var AnalisisInicio = React.createClass ({
             })
     },
     getRequest: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/analisis/getAll', {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/liquidacion/getAll', {
             method: 'GET',
             headers: new Headers({
                 'Content-Type': 'text/plain'
@@ -196,34 +159,13 @@ var AnalisisInicio = React.createClass ({
         return request
     },
 
-    updateFilterFields: function (field, event, date) {
-        var day = date.getDate();
-        var month = date.getMonth() + 1;
-        var year = date.getFullYear();
 
-
-        if (field === 'Fecha desde') {
-            this.setState({
-                fechaDesde: year + '-' + month + '-' + day
-            });
-        }
-        if (field === 'Fecha hasta') {
-            this.setState({
-                fechaHasta: year + '-' + month + '-' + day
-            });
-        }
-
-        this.filter();
-    },
     filter: function () {
 
-        var request = new Request(
-            'http://proyecto-final-prim.herokuapp.com/analisis/filtrar?' +
-            this.returnFilterFields('fechaDesde') +
-            this.returnFilterFields('fechaHasta') +
-            this.returnFilterFields('productor') +
-            this.returnFilterFields('especie') +
-            this.returnFilterFields('cosecha') ,
+    /*    var request = new Request(
+            'http://proyecto-final-prim.herokuapp.com/venta/filtrar?' +
+            this.returnFilterFields('puerto') +
+            this.returnFilterFields('certificado') +
             {
                 method: 'GET',
                 headers: new Headers({
@@ -241,10 +183,10 @@ var AnalisisInicio = React.createClass ({
                 });
 
             })
-
+*/
     },
     returnFilterFields: function (field) {
-        var section = '';
+      /*  var section = '';
         var fechaDesde = this.state.fechaDesde;
         var fechaHasta = this.state.fechaHasta;
         var currentProductorCuil = this.state.currentProductorCuil;
@@ -287,39 +229,31 @@ var AnalisisInicio = React.createClass ({
         if (field === 'cosecha' && productorSeleccionado !== '') {
             section =   ('&cosecha=' + cosechaSeleccionada)
         }
-        return section
+        return section*/
     },
 
     getControlledSelectFieldValue: function (label) {
         var value='';
 
-        if (label === 'Productor') {
-            value = this.state.currentProductorCuil;
+        if (label === 'Puerto') {
+            value = this.state.currentPuerto;
         }
-        if (label === 'Especie') {
-            value = this.state.currentEspecieDesc;
-        }
-        if (label === 'Cosecha') {
-            value = this.state.currentCosechaDesc;
+        if (label === 'Certificado') {
+            value = this.state.currentCertificado;
         }
 
         return value
     },
     handleControlledSelectFieldValueChange: function (label, event, key, payload) {
 
-        if (label === 'Productor') {
+        if (label === 'Puerto') {
             this.setState({
-                currentProductorCuil: payload
+                currentPuerto: payload
             }, this.filter());
         }
-        if (label === 'Especie') {
+        if (label === 'Certificado') {
             this.setState({
-                currentEspecieDesc: payload
-            });
-        }
-        if (label === 'Cosecha') {
-            this.setState({
-                currentCosechaDesc: payload
+                currentCertificado: payload
             });
         }
 
@@ -328,18 +262,13 @@ var AnalisisInicio = React.createClass ({
     renderSelectFieldsValues: function (label) {
         var values;
 
-        if (label === 'Productor') {
-            values = this.state.productoresCuil.map(function (value, key) {
+        if (label === 'Puerto') {
+            values = this.state.puertosNombres.map(function (value, key) {
                 return <MenuItem value={value} key={key} primaryText={value}/>
             })
         }
-        if (label === 'Especie') {
-            values = this.state.especiesDesc.map(function (value, key) {
-                return <MenuItem value={value} key={key} primaryText={value}/>
-            })
-        }
-        if (label === 'Cosecha') {
-            values = this.state.cosechasDesc.map(function (value, key) {
+        if (label === 'Certificado') {
+            values = this.state.certificadosNumero.map(function (value, key) {
                 return <MenuItem value={value} key={key} primaryText={value}/>
             })
         }
@@ -349,14 +278,10 @@ var AnalisisInicio = React.createClass ({
 
     handleLimpiarFiltros: function () {
         this.setState({
-            fechaDesde : null,
-            fechaHasta: null,
-            productor: '',
-            currentProductorCuil: '',
-            especie: '',
-            currentEspecieDesc: '',
-            cosecha: '',
-            currentCosechaDesc: '',
+            puerto: '',
+            currentPuerto: '',
+            certificado: '',
+            currentCertificado: ''
         }, this.filter());
 
 
@@ -366,80 +291,37 @@ var AnalisisInicio = React.createClass ({
         return (
             <div style={{width:'100%'}}>
                 <Paper zDepth={3} style={{padding: '20px'}}>
-                    <h1>Análisis de cereal</h1>
-                    <p>Para filtrar los Análisis que se encuentran en la base de datos, utilice los campos a continuación. </p>
+                    <h1>Venta de cereal</h1>
+                    <p>Para filtrar las ventas que se encuentran en la base de datos, utilice los campos a continuación. </p>
                     <div style={{display: 'inline-block', padding: '0', width:'100%'}}>
-                        <div style={{ width:'40%'}} >
-                            <DatePicker
-                                floatingLabelText= 'Fecha desde'
-                                style={{display: 'inline-block', width: '45%', marginRight:'5%'}}
-                                textFieldStyle={{width: '100%'}}
-                                autoOk={true}
-                                DateTimeFormat={global.Intl.DateTimeFormat}
-                                cancelLabel='Cerrar'
-                                hintText='Fecha desde'
-                                ref='Fecha desde'
-                                mode="landscape"
-                                onChange={this.updateFilterFields.bind(this, 'Fecha desde')}
-                            />
-                            <DatePicker
-                                floatingLabelText= 'Fecha hasta'
-                                style={{display: 'inline-block', width: '45%', float: 'right'}}
-                                textFieldStyle={{width: '100%'}}
-                                autoOk={true}
-                                cancelLabel='Cerrar'
-                                hintText='Fecha hasta'
-                                ref='Fecha hasta'
-                                mode="landscape"
-                                onChange={this.updateFilterFields.bind(this, 'Fecha hasta')}
-                            />
-                        </div>
-                        <br/>
                         <SelectField
                             labelStyle={styles.selectFieldLabel}
                             iconStyle={styles.selectFieldIcon}
                             style={styles.selectField}
                             menuStyle={styles.selectFieldMenu}
                             floatingLabelStyle={styles.selectFieldHint}
-                            floatingLabelText='Productor'
+                            floatingLabelText='Puerto'
                             maxHeight={200}
-                            ref='Productor'
-                            value={this.getControlledSelectFieldValue('Productor')}
-                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Productor')}
+                            ref='Puerto'
+                            value={this.getControlledSelectFieldValue('Puerto')}
+                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Puerto')}
                         >
-                            {this.renderSelectFieldsValues('Productor')}
+                            {this.renderSelectFieldsValues('Puerto')}
                         </SelectField>
-                        <br/>
-                        <div style={{marginTop: '45px'}}>
-                            <SelectField
-                                labelStyle={styles.selectFieldLabel}
-                                iconStyle={styles.selectFieldIcon}
-                                style={styles.selectField}
-                                menuStyle={styles.selectFieldMenu}
-                                floatingLabelStyle={styles.selectFieldHint}
-                                floatingLabelText='Especie'
-                                maxHeight={200}
-                                ref='Especie'
-                                value={this.getControlledSelectFieldValue('Especie')}
-                                onChange={this.handleControlledSelectFieldValueChange.bind(this,'Especie')}
-                            >
-                                {this.renderSelectFieldsValues('Especie')}
-                            </SelectField>
-                            <SelectField
-                                labelStyle={styles.selectFieldLabel}
-                                iconStyle={styles.selectFieldIcon}
-                                style={{ float: 'right', marginRight:'15%', height:'40px', width: '40%'}}
-                                menuStyle={styles.selectFieldMenu}
-                                floatingLabelStyle={styles.selectFieldHint}
-                                floatingLabelText='Cosecha'
-                                maxHeight={200}
-                                ref='Cosecha'
-                                value={this.getControlledSelectFieldValue('Cosecha')}
-                                onChange={this.handleControlledSelectFieldValueChange.bind(this,'Cosecha')}
-                            >
-                                {this.renderSelectFieldsValues('Cosecha')}
-                            </SelectField>
-                        </div>
+                        <SelectField
+                            labelStyle={styles.selectFieldLabel}
+                            iconStyle={styles.selectFieldIcon}
+                            style={styles.selectField}
+                            menuStyle={styles.selectFieldMenu}
+                            floatingLabelStyle={styles.selectFieldHint}
+                            floatingLabelText='Certificado'
+                            maxHeight={200}
+                            ref='Certificado'
+                            value={this.getControlledSelectFieldValue('Certificado')}
+                            onChange={this.handleControlledSelectFieldValueChange.bind(this,'Certificado')}
+                        >
+                            {this.renderSelectFieldsValues('Certificado')}
+                        </SelectField>
                     </div>
                     <br/>
                     <br/>
@@ -448,20 +330,20 @@ var AnalisisInicio = React.createClass ({
                     <br/>
                     <div>
                         <Table
-                            height={'325px'}
+                            height={'280px'}
                             fixedHeader={this.state.fixedHeader}
                             fixedFooter={this.state.fixedFooter}
                             selectable={this.state.selectable}
                             multiSelectable={this.state.multiSelectable}
                             onCellClick={this.handleSelection}
-                            >
+                        >
                             <TableHeader
                                 displaySelectAll={this.state.showCheckboxes}
                                 adjustForCheckbox={this.state.showCheckboxes}
                                 enableSelectAll={this.state.enableSelectAll}
-                                >
+                            >
                                 <TableRow>
-                                    <TableHeaderColumn colSpan="3" tooltip='Para modificar un Análisis solo debe seleccionarlo, para agregar uno nuevo haga click en "Agregar".' style={{textAlign: 'left', paddingLeft:'0px'}}>
+                                    <TableHeaderColumn colSpan="3" tooltip="Limpiar filtro" style={{textAlign: 'left', paddingLeft:'0px'}}>
                                         <RaisedButton
                                             style={{margin:'10px 0px'}}
                                             backgroundColor="#8BC34A"
@@ -469,23 +351,23 @@ var AnalisisInicio = React.createClass ({
                                             onTouchTap={this.handleLimpiarFiltros}
                                         />
                                     </TableHeaderColumn>
-                                    <TableHeaderColumn colSpan="3" tooltip='Para modificar un Análisis solo debe seleccionarlo, para agregar uno nuevo haga click en "Agregar".' style={{textAlign: 'right'}}>
-                                        Para modificar un Análisis solo debe seleccionarlo, para agregar uno nuevo haga click en "Agregar".
+                                    <TableHeaderColumn colSpan="3" tooltip='Para modificar una Venta solo debe seleccionarla, para agregar una nueva haga click en "Agregar".' style={{textAlign: 'right'}}>
+                                        Para modificar una Venta solo debe seleccionarla, para agregar una nueva haga click en "Agregar".
                                         <RaisedButton
                                             style={{margin:'10px'}}
                                             backgroundColor="#8BC34A"
                                             label="Agregar"
-                                            onTouchTap={this.handleAgregarAnalisis}
-                                            />
+                                            onTouchTap={this.handleAgregarVenta}
+                                        />
                                     </TableHeaderColumn>
                                 </TableRow>
                                 <TableRow>
-                                    <TableHeaderColumn tooltip="Fecha">Fecha</TableHeaderColumn>
-                                    <TableHeaderColumn tooltip="Nro.">Nro.</TableHeaderColumn>
-                                    <TableHeaderColumn tooltip="Costo">Costo</TableHeaderColumn>
-                                    <TableHeaderColumn tooltip="Remitente">Remitente</TableHeaderColumn>
-                                    <TableHeaderColumn tooltip="Especie">Especie</TableHeaderColumn>
-                                    <TableHeaderColumn tooltip="Cosecha">Cosecha</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="Certificado">Certificado</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="Puerto">Puerto</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="Localidad">Localidad</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="KG Netos">KG Netos</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="Calidad">Calidad</TableHeaderColumn>
+                                    <TableHeaderColumn tooltip="Precio de Venta">Precio de Venta</TableHeaderColumn>
                                 </TableRow>
                             </TableHeader>
                             <TableBody
@@ -493,17 +375,12 @@ var AnalisisInicio = React.createClass ({
                                 deselectOnClickaway={this.state.deselectOnClickaway}
                                 showRowHover={this.state.showRowHover}
                                 stripedRows={this.state.stripedRows}
-                                >
+                            >
                                 {this.renderRows()}
                             </TableBody>
                             <TableFooter
                                 adjustForCheckbox={this.state.showCheckboxes}
-                                >
-                                <TableRow>
-                                    <TableRowColumn colSpan="3" style={{textAlign: 'center'}}>
-
-                                    </TableRowColumn>
-                                </TableRow>
+                            >
                             </TableFooter>
                         </Table>
                     </div>
@@ -521,14 +398,34 @@ var AnalisisInicio = React.createClass ({
     },
 
     renderRow: function (row, index) {
+        var puertoNombre = '';
+        var puertoLocalidad = '';
+        var certificadoNumero = '';
+        var certificadoKGNetos = '';
+        var certificadoCalidad = '';
+
+        this.state.allPuertosEntities.forEach(function (p) {
+            if (p['_id'] === row.puerto) {
+                puertoNombre = p.nombre;
+                puertoLocalidad = p.localidad;
+            }
+        });
+        this.state.allCertificadosEntities.forEach(function (c) {
+            if (c['_id'] === row.certificado) {
+                certificadoNumero = c.numero;
+                certificadoKGNetos = c['ingreso']['kg_neto'];
+                certificadoCalidad = c['ingreso']['calidad'];
+            }
+        });
+
         return(
             <TableRow key={index} selected={row.selected} >
-                <TableRowColumn>{row['fecha_analisis']}</TableRowColumn>
-                <TableRowColumn>{row['nro_analisis']}</TableRowColumn>
-                <TableRowColumn>{row['costo_analisis']}</TableRowColumn>
-                <TableRowColumn>{row.productor['cuil']}</TableRowColumn>
-                <TableRowColumn>{row.especie['descripcion']}</TableRowColumn>
-                <TableRowColumn>{row.cosecha['descripcion']}</TableRowColumn>
+                <TableRowColumn>{certificadoNumero}</TableRowColumn>
+                <TableRowColumn>{puertoNombre}</TableRowColumn>
+                <TableRowColumn>{puertoLocalidad}</TableRowColumn>
+                <TableRowColumn>{certificadoKGNetos}</TableRowColumn>
+                <TableRowColumn>{certificadoCalidad}</TableRowColumn>
+                <TableRowColumn>{row['precio_venta']}</TableRowColumn>
             </TableRow>
         )
     },
@@ -538,24 +435,22 @@ var AnalisisInicio = React.createClass ({
             [event.target.name]: toggled
         });
     },
-
     handleChange: function (event) {
         this.setState({height: event.target.value});
     },
-
     handleSelection: function (rowNumber, columnId) {
         var selectedItem = this.state.items[rowNumber];
 
-        browserHistory.push('analisis/mod/' + selectedItem['_id']);
+        browserHistory.push('venta/mod/' + selectedItem['_id']);
     },
 
-    handleAgregarAnalisis: function () {
-        browserHistory.push('analisis/nuevoAnalisis');
+    handleAgregarVenta: function () {
+        browserHistory.push('venta/nuevaVenta');
     },
 
 
-    getAllProductores: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/productores/getAll', {
+    getAllPuertos: function () {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/puertos/getAll', {
             method: 'GET',
             headers: new Headers({
                 'Content-Type': 'text/plain'
@@ -568,16 +463,16 @@ var AnalisisInicio = React.createClass ({
             })
             .then((response) => {
                 this.setState({
-                    allProductoresEntities: response.data,
-                    productoresCuil: response.data.map(function (productor) {
-                        return productor['cuil']
+                    allPuertosEntities: response.data,
+                    puertosNombres: response.data.map(function (puerto) {
+                        return puerto['nombre']
                     })
                 });
 
             })
     },
-    getAllEspecies: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/especies/getAll', {
+    getAllCertificados: function () {
+        var request = new Request('http://proyecto-final-prim.herokuapp.com/certificadosDeposito/getAll', {
             method: 'GET',
             headers: new Headers({
                 'Content-Type': 'text/plain'
@@ -590,30 +485,9 @@ var AnalisisInicio = React.createClass ({
             })
             .then((response) => {
                 this.setState({
-                    allEspeciesEntities: response.data,
-                    especiesDesc: response.data.map(function (especie) {
-                        return especie['descripcion']
-                    })
-                });
-            })
-    },
-    getAllCosechas: function () {
-        var request = new Request('http://proyecto-final-prim.herokuapp.com/cosechas/getAll', {
-            method: 'GET',
-            headers: new Headers({
-                'Content-Type': 'text/plain'
-            })
-        });
-
-        fetch(request)
-            .then((response) => {
-                return response.json()
-            })
-            .then((response) => {
-                this.setState({
-                    allCosechasEntities: response.data,
-                    cosechasDesc: response.data.map(function (cosecha) {
-                        return cosecha['descripcion']
+                    allCertificadosEntities: response.data,
+                    certificadosNumero: response.data.map(function (certificado) {
+                        return certificado['numero']
                     })
                 });
             })
@@ -622,4 +496,4 @@ var AnalisisInicio = React.createClass ({
 
 });
 
-export default AnalisisInicio;
+export default VentaInicio;

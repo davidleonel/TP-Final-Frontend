@@ -1,6 +1,7 @@
 import React from 'react';
 import _ from 'lodash';
 
+import {browserHistory} from 'react-router';
 import {Table, TableBody, TableFooter, TableHeader, TableHeaderColumn, TableRow, TableRowColumn}
     from 'material-ui/Table';
 import Paper from 'material-ui/Paper';
@@ -49,6 +50,7 @@ var EntityBajaList = React.createClass ({
             selectedRowsArray: [],
             currentSelectedRows: {},
             deleteConfirmationModal: false,
+            deleteConfirmationModal2: false,
             items: []
         }
     },
@@ -62,7 +64,6 @@ var EntityBajaList = React.createClass ({
     },
 
     render() {
-        console.log('states: ', this.state);
         return (
             <div style={{
                     margin: '20px 0 70px 0',
@@ -142,6 +143,21 @@ var EntityBajaList = React.createClass ({
                                         {<span>{'Esta seguro que quiere dar de baja ' + this.state.selectedRowsArray.length + ' registros?'}</span>}
                                         {<WarningIcon  style={{height:'90px', width:'90px', marginBottom: '-39px', marginLeft:'35%'}} />}
                                     </div>
+                                </Dialog>
+                                <Dialog
+                                    title={"Los registros fueron dados de baja con exito"}
+                                    actions={[
+                                                <FlatButton
+                                                    label="OK"
+                                                    primary={true}
+                                                    disabled={false}
+                                                    onTouchTap={this.handleCloseBajaEntityModal}
+                                                />
+                                            ]}
+                                    modal={false}
+                                    open={this.state.deleteConfirmationModal2}
+                                    >
+                                    {'Sera redireccionado a la pagina inicial.'}
                                 </Dialog>
                             </TableRow>
                             <TableRow>
@@ -224,11 +240,11 @@ var EntityBajaList = React.createClass ({
                     return response.json()
                 })
                 .then((response) => {
-                    console.log(response);
                 });
         }
 
         this.handleCloseDeleteConfirmationModal();
+        this.handleOpenBajaEntityModal();
     },
 
     handleRowSelection: function (selectedRows) {
@@ -256,6 +272,14 @@ var EntityBajaList = React.createClass ({
 
     handleCloseDeleteConfirmationModal: function () {
         this.setState({deleteConfirmationModal: false});
+    },
+
+    handleOpenBajaEntityModal: function () {
+        this.setState({deleteConfirmationModal2: true});
+    },
+    handleCloseBajaEntityModal: function () {
+        this.setState({deleteConfirmationModal2: false});
+        browserHistory.push('/welcome');
     },
 
     makeRequest: function () {
@@ -339,6 +363,9 @@ var EntityBajaList = React.createClass ({
         }
         if (this.props.entity === 'empresa') {
             entidad = 'empresas'
+        }
+        if (this.props.entity === 'puerto') {
+            entidad = 'puertos'
         }
 
         return entidad;

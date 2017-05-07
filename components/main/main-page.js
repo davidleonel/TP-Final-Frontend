@@ -40,9 +40,6 @@ const muiTheme = getMuiTheme({
 //***********THEME********************
 
 
-
-
-
 var MainPage = React.createClass ({
 
     propTypes: {
@@ -55,17 +52,56 @@ var MainPage = React.createClass ({
         }
     },
 
+    childContextTypes: {
+        logeado: React.PropTypes.bool,
+    },
+
+    getChildContext: function () {
+        return {
+            logeado: false
+        };
+    },
+
+
     render() {
         return(
             <MuiThemeProvider muiTheme={muiTheme}>
                 <div>
-                    <MainMenuBar />
                     {this.props.children}
                 </div>
-             </MuiThemeProvider>
+            </MuiThemeProvider>
         )
-    }
+    },
+
+
+    /*renderMainComponents: function () {
+        var context = this.getChildContext();
+        var mainComponents;
+
+        if (context['logeado']) {
+            mainComponents =
+                <MuiThemeProvider muiTheme={muiTheme}>
+                    <div>
+                        <MainMenuBar />
+                        {this.props.children}
+                    </div>
+                </MuiThemeProvider>
+        } else {
+            mainComponents =
+                <MuiThemeProvider muiTheme={muiTheme}>
+                    <div>
+                        {this.props.children}
+                    </div>
+                </MuiThemeProvider>
+        }
+
+        return mainComponents
+
+    }*/
 
 });
 
 export default MainPage;
+
+// <MainMenuBar />
+//{this.props.children}

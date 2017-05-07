@@ -187,7 +187,7 @@ var IngresioDeCerealInicio = React.createClass ({
             .then((response) => {
                 this.setState({
                     items: response.data
-                }, console.log('response', response));
+                });
 
             })
 
@@ -278,7 +278,6 @@ var IngresioDeCerealInicio = React.createClass ({
     },
 
     handleLimpiarFiltros: function () {
-        console.log('entro al limpiarfiltros');
         this.setState({
             fechaDesde : null,
             fechaHasta: null,
@@ -303,9 +302,12 @@ var IngresioDeCerealInicio = React.createClass ({
         return (
             <div style={{width:'100%'}}>
                 <Paper zDepth={3} style={{padding: '20px'}}>
+                    <h1>Ingreso de cereal</h1>
+                    <p>Para filtrar los ingresos que se encuentran en la base de datos, utilice los campos a continuación. </p>
                     <div style={{display: 'inline-block', padding: '0', width:'100%'}}>
                         <div style={{ width:'40%'}} >
                             <DatePicker
+                                floatingLabelText= 'Fecha desde'
                                 style={{display: 'inline-block', width: '45%', marginRight:'5%'}}
                                 textFieldStyle={{width: '100%'}}
                                 autoOk={true}
@@ -317,6 +319,7 @@ var IngresioDeCerealInicio = React.createClass ({
                                 onChange={this.updateFilterFields.bind(this, 'Fecha desde')}
                             />
                             <DatePicker
+                                floatingLabelText= 'Fecha hasta'
                                  style={{display: 'inline-block', width: '45%', float: 'right'}}
                                  textFieldStyle={{width: '100%'}}
                                  autoOk={true}
@@ -346,7 +349,7 @@ var IngresioDeCerealInicio = React.createClass ({
                             <SelectField
                                 labelStyle={styles.selectFieldLabel}
                                 iconStyle={styles.selectFieldIcon}
-                                style={{float: 'right', height:'40px', width: '40%', marginRight:'10%'}}
+                                style={{float: 'right', height:'40px', width: '40%', marginRight:'17%'}}
                                 menuStyle={styles.selectFieldMenu}
                                 floatingLabelStyle={styles.selectFieldHint}
                                 floatingLabelText='Productor'
@@ -376,7 +379,7 @@ var IngresioDeCerealInicio = React.createClass ({
                     <br/>
                     <div>
                         <Table
-                            height={'450px'}
+                            height={'377px'}
                             fixedHeader={this.state.fixedHeader}
                             fixedFooter={this.state.fixedFooter}
                             selectable={this.state.selectable}
@@ -389,7 +392,7 @@ var IngresioDeCerealInicio = React.createClass ({
                                 enableSelectAll={this.state.enableSelectAll}
                             >
                                 <TableRow>
-                                    <TableHeaderColumn colSpan="4" tooltip="Limpiar filtro" style={{textAlign: 'left', paddingLeft:'0px'}}>
+                                    <TableHeaderColumn colSpan="4" tooltip="Utilise este boton para limpiar los filtros y traer todo los ingresos nuevamente." style={{textAlign: 'left', paddingLeft:'0px'}}>
                                         <RaisedButton
                                             style={{margin:'10px 0px'}}
                                             backgroundColor="#8BC34A"
